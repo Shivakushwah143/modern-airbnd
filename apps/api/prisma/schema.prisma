@@ -1,0 +1,335 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+enum PropertyStatus {
+ DRAFT
+ PUBLISHED
+ ARCHIVED
+}
+enum InventoryMode {
+ ENTIRE_PROPERTY
+ MULTI_UNIT
+}
+enum BlockReason {
+ BOOKED
+ MAINTENANCE
+ OWNER_BLOCKED
+ OTHER
+}
+enum EnquiryStatus {
+ NEW
+ CONTACTED
+ AVAILABLE
+ NOT_AVAILABLE
+ NEGOTIATING
+ CONFIRMED
+ CLOSED
+ CANCELLED
+}
+enum ReservationSource {
+ WHATSAPP
+ AIRBNB
+ BOOKING_COM
+ DIRECT
+ REFERRAL
+ OTHER
+}
+enum ReservationStatus {
+ TENTATIVE
+ CONFIRMED
+ CANCELLED
+ CLOSED
+}
+enum OwnerLeadStatus {
+ NEW
+ CONTACTED
+ QUALIFIED
+ CLOSED
+ CANCELLED
+}
+enum StayStatus {
+ RESERVED
+ CHECKED_IN
+ CHECKED_OUT
+ NO_SHOW
+}
+enum HousekeepingStatus {
+ PENDING
+ IN_PROGRESS
+ DONE
+ CANCELLED
+}
+enum MaintenancePriority {
+ LOW
+ MEDIUM
+ HIGH
+ URGENT
+}
+enum MaintenanceStatus {
+ OPEN
+ IN_PROGRESS
+ RESOLVED
+ CANCELLED
+}
+model Location {
+ id String @id @default(uuid()) @db.Uuid
+ name String
+ slug String @unique
+ state String @default("")
+ country String @default("India")
+ isActive Boolean @default(true)
+ properties Property[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+}
+model Property {
+ id String @id @default(uuid()) @db.Uuid
+ locationId String @db.Uuid
+ location Location @relation(fields:[locationId], references:[id])
+ ownerId String? @db.Uuid
+ owner Owner? @relation(fields:[ownerId], references:[id])
+ name String
+ slug String @unique
+ shortDescription String @default("")
+ description String @default("")
+ propertyType String @default("Entire apartment")
+ inventoryMode InventoryMode @default(ENTIRE_PROPERTY)
+ inventoryReviewRequired Boolean @default(false)
+ localHighlights Json @default("[]")
+ suitedFor String[] @default([])
+ area String @default("")
+ addressLine String @default("")
+ latitude Float?
+ longitude Float?
+ bedrooms Int @default(1)
+ bathrooms Int @default(1)
+ beds Int @default(1)
+ maxGuests Int @default(2)
+ whatsappNumber String @default("")
+ houseRules String[] @default([])
+ checkInInfo String @default("")
+ checkOutInfo String @default("")
+ propertyNotes String @default("")
+ seoTitle String @default("")
+ seoDescription String @default("")
+ status PropertyStatus @default(DRAFT)
+ isDemo Boolean @default(false)
+ publishedAt DateTime?
+ archivedAt DateTime?
+ units Unit[]
+ media PropertyMedia[]
+ amenities Amenity[]
+ externalListings ExternalListing[]
+ enquiries Enquiry[]
+ reservations Reservation[]
+ housekeepingTasks HousekeepingTask[]
+ maintenanceIssues MaintenanceIssue[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([locationId,status])
+ @@index([ownerId])
+}
+model Owner {
+ id String @id @default(uuid()) @db.Uuid
+ name String
+ phone String
+ email String @default("")
+ notes String @default("")
+ properties Property[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([name])
+ @@index([phone])
+}
+model Guest {
+ id String @id @default(uuid()) @db.Uuid
+ name String
+ phone String
+ email String @default("")
+ notes String @default("")
+ enquiries Enquiry[]
+ reservations Reservation[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@unique([phone])
+ @@index([name])
+}
+model Enquiry {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId], references:[id])
+ guestId String? @db.Uuid
+ guest Guest? @relation(fields:[guestId], references:[id])
+ status EnquiryStatus @default(NEW)
+ checkIn DateTime @db.Date
+ checkOut DateTime @db.Date
+ adults Int
+ children Int @default(0)
+ guestName String
+ phone String
+ message String @default("")
+ source ReservationSource @default(WHATSAPP)
+ reservations Reservation[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([propertyId,status])
+ @@index([guestId])
+ @@index([checkIn,checkOut])
+}
+model Reservation {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId], references:[id])
+ guestId String? @db.Uuid
+ guest Guest? @relation(fields:[guestId], references:[id])
+ enquiryId String? @db.Uuid
+ enquiry Enquiry? @relation(fields:[enquiryId], references:[id])
+ unitId String? @db.Uuid
+ source ReservationSource
+ status ReservationStatus @default(CONFIRMED)
+ stayStatus StayStatus @default(RESERVED)
+ checkIn DateTime @db.Date
+ checkOut DateTime @db.Date
+ adults Int
+ children Int @default(0)
+ guestName String
+ phone String
+ notes String @default("")
+ operationalNotes String @default("")
+ checkedInAt DateTime?
+ checkedOutAt DateTime?
+ availabilityBlockId String? @unique @db.Uuid
+ availabilityBlock AvailabilityBlock? @relation(fields:[availabilityBlockId], references:[id])
+ housekeepingTasks HousekeepingTask[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([propertyId,status])
+ @@index([guestId])
+ @@index([enquiryId])
+ @@index([checkIn,checkOut])
+}
+model HousekeepingTask {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId], references:[id])
+ reservationId String? @db.Uuid
+ reservation Reservation? @relation(fields:[reservationId], references:[id])
+ assigneeName String @default("")
+ dueDate DateTime @db.Date
+ status HousekeepingStatus @default(PENDING)
+ notes String @default("")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([propertyId,status])
+ @@index([reservationId])
+ @@index([dueDate,status])
+}
+model MaintenanceIssue {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId], references:[id])
+ title String
+ description String @default("")
+ priority MaintenancePriority @default(MEDIUM)
+ assigneeName String @default("")
+ status MaintenanceStatus @default(OPEN)
+ cost Decimal? @db.Decimal(12,2)
+ notes String @default("")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([propertyId,status])
+ @@index([priority,status])
+}
+model OwnerLead {
+ id String @id @default(uuid()) @db.Uuid
+ status OwnerLeadStatus @default(NEW)
+ name String
+ phone String
+ email String @default("")
+ city String @default("")
+ propertyType String @default("")
+ message String @default("")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([status])
+ @@index([createdAt])
+}
+model Unit {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId],references:[id])
+ name String
+ isActive Boolean @default(true)
+ isEntireProperty Boolean @default(false)
+ sortOrder Int @default(0)
+ blocks AvailabilityBlock[]
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([propertyId])
+}
+model AvailabilityBlock {
+ id String @id @default(uuid()) @db.Uuid
+ unitId String @db.Uuid
+ unit Unit @relation(fields:[unitId],references:[id])
+ startDate DateTime @db.Date
+ endDate DateTime @db.Date
+ reason BlockReason @default(OWNER_BLOCKED)
+ note String @default("")
+ sourceBlockId String?
+ reservation Reservation?
+ @@unique([unitId,sourceBlockId])
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([unitId,startDate])
+ @@index([unitId,endDate])
+}
+model PropertyMedia {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId],references:[id])
+ cloudinaryPublicId String @unique
+ secureUrl String
+ format String
+ width Int
+ height Int
+ bytes Int
+ altText String
+ sortOrder Int @default(0)
+ isCover Boolean @default(false)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([propertyId])
+}
+model Amenity {
+ id String @id @default(uuid()) @db.Uuid
+ name String
+ slug String @unique
+ properties Property[]
+}
+model ExternalListing {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String @db.Uuid
+ property Property @relation(fields:[propertyId],references:[id])
+ provider String
+ url String
+ rating Float?
+ reviewCount Int?
+ verifiedAt DateTime?
+ isVisible Boolean @default(false)
+ @@index([propertyId])
+}
+model SiteSettings {
+ id Int @id @default(1)
+ defaultWhatsappNumber String @default("")
+ supportPhone String @default("")
+ supportEmail String @default("")
+ businessAddress String @default("")
+ operatorName String @default("")
+ aboutText String @default("")
+ privacyText String @default("")
+ termsText String @default("")
+}

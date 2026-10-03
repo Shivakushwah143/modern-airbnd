@@ -1,0 +1,50 @@
+{
+  "name": "modern-airbnd",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev:api\" \"npm run dev:web\"",
+    "build": "npm run build -w @modern-airbnd/api && node infra/scripts/run.mjs web:build",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "test": "node infra/scripts/run.mjs test",
+    "test:e2e": "node infra/scripts/run.mjs test:e2e",
+    "db:generate": "npm run db:generate -w @modern-airbnd/api",
+    "db:migrate": "node infra/scripts/run.mjs db:migrate",
+    "db:seed": "node infra/scripts/run.mjs db:seed",
+    "admin:hash": "tsx infra/scripts/hash-password.ts",
+    "dev:api": "node infra/scripts/run.mjs api:dev",
+    "dev:web": "node infra/scripts/run.mjs web:dev",
+    "start:web": "node infra/scripts/run.mjs web:start"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/connect-pg-simple": "7.0.3",
+    "@types/express": "5.0.6",
+    "@types/express-session": "1.19.0",
+    "@types/node": "26.6.4",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/supertest": "7.2.1",
+    "concurrently": "10.0.5",
+    "embedded-postgres": "18.4.0-beta.17",
+    "eslint": "10.11.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "prettier": "3.5.3",
+    "prisma": "6.19.0",
+    "supertest": "7.3.1",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.3"
+  },
+  "type": "module"
+}

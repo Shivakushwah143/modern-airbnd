@@ -1,0 +1,23 @@
+import {PrismaClient} from '@prisma/client';
+import {randomBytes} from 'node:crypto';
+import argon2 from 'argon2';
+import {spawn,execFileSync} from 'node:child_process';
+import {mkdirSync,writeFileSync} from 'node:fs';
+const url=process.env.TEST_DATABASE_URL;
+if(!url||!new URL(url).pathname.endsWith('_test'))throw new Error('Use a disposable TEST_DATABASE_URL ending in _test.');
+const password=randomBytes(24).toString('hex');
+Object.assign(process.env,{DATABASE_URL:url,NODE_ENV:'test',PORT:'3401',APP_ORIGIN:'http://localhost:3400',API_INTERNAL_URL:'http://127.0.0.1:3401',NEXT_PUBLIC_SITE_URL:'http://localhost:3400',SESSION_SECRET:randomBytes(48).toString('hex'),ADMIN_PASSWORD_HASH:await argon2.hash(password),LOG_LEVEL:'silent'});
+execFileSync(process.execPath,['node_modules/prisma/build/index.js','migrate','deploy','--schema=apps/api/prisma/schema.prisma'],{env:process.env,stdio:'ignore'});
+const db=new PrismaClient();
+await db.$executeRawUnsafe('TRUNCATE "Location", "Property", "Unit", "AvailabilityBlock", "PropertyMedia", "Amenity", "ExternalListing", "SiteSettings", "admin_session" CASCADE');
+const location=await db.location.create({data:{name:'Test Gurgaon',slug:'test-gurgaon',state:'Haryana'}});
+await db.siteSettings.create({data:{id:1,defaultWhatsappNumber:'+919876543210',operatorName:'Test Operator',aboutText:'Test-only business information.'}});
+const p=await db.property.create({data:{name:'Test Garden Apartment',slug:'test-garden-apartment',locationId:location.id,status:'PUBLISHED',description:'Browser test fixture. This record is used only in the disposable test database.',units:{create:{name:'Entire Property',isEntireProperty:true}},media:{create:{cloudinaryPublicId:'test/fixture',secureUrl:'https://res.cloudinary.com/modern-airbnd-test/image/upload/fixture.png',format:'png',width:640,height:480,bytes:100,altText:'Test photo fixture',isCover:true}}}});
+mkdirSync('.e2e-runtime',{recursive:true});writeFileSync('.e2e-runtime/session.json',JSON.stringify({password,propertyId:p.id,locationId:location.id}),{mode:0o600});
+await db.$disconnect();
+const api=spawn(process.execPath,['--import','tsx','apps/api/src/server.ts'],{env:process.env,stdio:'inherit'});
+const web=spawn(process.execPath,['node_modules/next/dist/bin/next','dev','apps/web','--webpack','--port','3400'],{env:{...process.env,NODE_ENV:'development'},stdio:'inherit'});
+function stop(){api.kill('SIGTERM');web.kill('SIGTERM');}
+process.on('SIGTERM',stop);process.on('SIGINT',stop);
+api.on('exit',code=>{web.kill('SIGTERM');process.exit(code||0);});
+web.on('exit',code=>{api.kill('SIGTERM');process.exit(code||0);});

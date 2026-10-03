@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests',testMatch:'remediation.spec.ts',workers:1,timeout:45000,use:{baseURL:'http://localhost:3400',viewport:{width:390,height:844},screenshot:'off',trace:'off',video:'off',launchOptions:{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}},reporter:'list',webServer:{command:'node tests/start-e2e.mjs',url:'http://localhost:3400',reuseExistingServer:false,timeout:120000}});

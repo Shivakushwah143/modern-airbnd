@@ -1,0 +1,19 @@
+name: modern-airbnd-dev
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    environment:
+      POSTGRES_DB: modern_airbnd
+      POSTGRES_USER: modern_airbnd
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_dev:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U modern_airbnd -d modern_airbnd"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  postgres_dev:
