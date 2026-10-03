@@ -6,9 +6,9 @@ import { Icon } from "./Icon";
 export function Header() {
   const [open, setOpen] = useState(false);
   const links = [
-    ["/properties", "Properties"],
+    ["/properties", "Stays"],
     ["/locations", "Locations"],
-    ["/owners", "List your property"],
+    ["/owners", "For Owners"],
     ["/about", "About"],
     ["/contact", "Contact"],
   ];

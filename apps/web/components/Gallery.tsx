@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import type { Media } from "@modern-airbnd/contracts";
 import { Photo } from "./Photo";
 import { Dialog } from "./Dialog";
+
 export function Gallery({ media, demo }: { media: Media[]; demo: boolean }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -62,6 +63,7 @@ export function Gallery({ media, demo }: { media: Media[]; demo: boolean }) {
             >
               ›
             </button>
+            <button onClick={() => setOpen(true)}>View all photos</button>
           </div>
         )}
       </div>

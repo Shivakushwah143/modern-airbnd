@@ -1,10 +1,11 @@
 "use client";
 import { useState, useTransition, useEffect } from "react";
-import { DateRange } from "./DateRange";
 import { useRouter } from "next/navigation";
 import type { Location } from "@modern-airbnd/contracts";
+import { DateRange } from "./DateRange";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
+
 export function Search({
   locations,
   initial = {},
@@ -20,21 +21,25 @@ export function Search({
   const [location, setLocation] = useState(initial.location || "");
   const [start, setStart] = useState(initial.checkIn || "");
   const [end, setEnd] = useState(initial.checkOut || "");
+  const [guests, setGuests] = useState(2);
   const [modal, setModal] = useState<"dates" | "location" | null>(null);
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
   const [locationFilter, setLocationFilter] = useState("");
+
   useEffect(() => {
     const open = () => setModal("dates");
     window.addEventListener("modern-airbnd:dates", open);
     return () => window.removeEventListener("modern-airbnd:dates", open);
   }, []);
+
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
+
   function validate() {
     if ((start && !end) || (!start && end))
       return "Choose both check-in and check-out.";
@@ -42,6 +47,7 @@ export function Search({
     if (start && end <= start) return "Check-out must be after check-in.";
     return "";
   }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const err = validate();
@@ -61,6 +67,7 @@ export function Search({
       router.refresh();
     });
   }
+
   return (
     <>
       <form
@@ -77,10 +84,10 @@ export function Search({
             >
               <Icon name="pin" />
               <span>
-                <small>Where would you like to stay?</small>
+                <small>Location</small>
                 <strong>
                   {locations.find((l) => l.slug === location)?.name ||
-                    "Explore all locations"}
+                    "All locations"}
                 </strong>
               </span>
               <span className="chevron">⌄</span>
@@ -93,16 +100,39 @@ export function Search({
           >
             <Icon name="calendar" />
             <span>
-              <small>Check-in · Check-out</small>
-              <strong>
-                {start && end ? `${start} — ${end}` : "Add your dates"}
-              </strong>
+              <small>Dates</small>
+              <strong>{start && end ? `${start} to ${end}` : "Add dates"}</strong>
             </span>
             <span className="chevron">⌄</span>
           </button>
+          {!compact && (
+            <div className="search-field guest-stepper">
+              <Icon name="home" />
+              <span>
+                <small>Guests</small>
+                <strong>
+                  {guests} {guests === 1 ? "guest" : "guests"}
+                </strong>
+              </span>
+              <button
+                type="button"
+                aria-label="Remove guest"
+                onClick={() => setGuests((v) => Math.max(1, v - 1))}
+              >
+                -
+              </button>
+              <button
+                type="button"
+                aria-label="Add guest"
+                onClick={() => setGuests((v) => Math.min(12, v + 1))}
+              >
+                +
+              </button>
+            </div>
+          )}
         </div>
         <button className="button primary" disabled={busy}>
-          {busy ? "Checking…" : "Check Availability"}
+          {busy ? "Checking..." : "Check availability"}
         </button>
         {error && (
           <p className="field-error" role="alert">
@@ -163,7 +193,7 @@ export function Search({
         title="When would you like to stay?"
       >
         <p className="muted">
-          Choose your check-in and check-out. You can also browse without dates.
+          Choose check-in and check-out. You can also browse without dates.
         </p>
         <DateRange
           start={start}
@@ -200,7 +230,7 @@ export function Search({
               if (!err) setModal(null);
             }}
           >
-            Apply Dates
+            Apply dates
           </button>
         </div>
       </Dialog>

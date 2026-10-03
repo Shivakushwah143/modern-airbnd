@@ -9,6 +9,7 @@ import {
   LocalLens,
   ExternalProof,
 } from "./Trust";
+
 export function PropertyBody({
   property: p,
   settings,
@@ -28,7 +29,7 @@ export function PropertyBody({
       <div className="pdp-remediated">
         <header className="property-identity">
           <p className="eyebrow">
-            {p.location.name} {p.area && `/ ${p.area}`}
+            {p.area || p.location.name} {p.area && `/ ${p.location.name}`}
           </p>
           <h1>{p.name}</h1>
           <p>
@@ -37,8 +38,8 @@ export function PropertyBody({
           </p>
         </header>
         <aside className="enquiry-panel">
-          <p className="eyebrow">YOUR STAY</p>
-          <h2>Make room for your dates.</h2>
+          <p className="eyebrow">ENQUIRE</p>
+          <h2>Check dates, then speak with the team.</h2>
           {!preview && (
             <Search
               locations={[]}
@@ -62,8 +63,8 @@ export function PropertyBody({
             />
           )}
           <p className="small muted">
-            Availability is maintained manually. An enquiry does not reserve
-            your stay.
+            Your enquiry is saved before WhatsApp opens. The team confirms final
+            arrangements directly.
           </p>
           {p.availability.status === "AVAILABLE" && !p.whatsappUrl && (
             <p className="small">
@@ -76,12 +77,12 @@ export function PropertyBody({
         <div className="property-story">
           <PropertyPassport property={p} operator={settings.operatorName} />
           <section className="detail-section">
-            <h2>Inside the space.</h2>
+            <h2>Inside the space</h2>
             <p className="prose">{p.description}</p>
           </section>
           {p.amenities.length > 0 && (
             <section className="detail-section">
-              <h2>What’s here for you</h2>
+              <h2>What is here for you</h2>
               <ul className="amenities-grid">
                 {p.amenities.map((a) => (
                   <li key={a.id}>{a.name}</li>

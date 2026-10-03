@@ -19,21 +19,20 @@ export default async function Home() {
     <>
       <section className="hero container">
         <div className="hero-copy">
-          <p className="eyebrow">A PLACE FOR YOUR NEXT CHAPTER</p>
+          <p className="eyebrow">CURATED MANAGED STAYS</p>
           <h1>
-            Somewhere new.
+            Stay in homes
             <br />
-            <em>Feels like you.</em>
+            <em>with a local team behind them.</em>
           </h1>
           <p className="hero-description">
-            Explore the space. Check your dates.
-            <br />
-            Talk directly with the property team.
+            Calm, practical apartments in Gurgaon and Delhi. See the space,
+            check your dates, then speak with the team that manages the stay.
           </p>
           <Search locations={locations} />
           <div className="hero-note">
-            <Icon name="chat" size={17} /> No account needed. Just a
-            conversation.
+            <Icon name="chat" size={17} /> No booking engine. No guest account.
+            Just a clear enquiry.
           </div>
         </div>
         <div className="hero-visual">
@@ -82,11 +81,11 @@ export default async function Home() {
       <section className="container section">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">FIND YOUR PLACE</p>
-            <h2>Stays worth a closer look.</h2>
+            <p className="eyebrow">CURATED HOMES</p>
+            <h2>Places with enough detail to decide calmly.</h2>
           </div>
           <Link href="/properties" className="text-link">
-            Explore all properties
+            View all stays
           </Link>
         </div>
         {properties.some((p) => p.isDemo) && (
@@ -116,10 +115,10 @@ export default async function Home() {
       </section>
       <section className="container section locations-section">
         <div>
-          <p className="eyebrow">A CHANGE OF SCENE</p>
-          <h2>Where will you settle in?</h2>
+          <p className="eyebrow">NEIGHBOURHOODS</p>
+          <h2>Start with the part of the city that fits the day.</h2>
           <p className="muted">
-            Start with a location. Find a space that fits.
+            Each stay carries local context, not just a pin on a map.
           </p>
         </div>
         <div className="location-grid">
@@ -140,28 +139,28 @@ export default async function Home() {
       <section className="container section">
         <div className="how-grid">
           <div>
-            <p className="eyebrow">A SIMPLE WAY TO STAY</p>
+            <p className="eyebrow">WHY MODERN AIRBND</p>
             <h2>
-              Less guesswork.
+              Managed stays,
               <br />
-              More clarity.
+              fewer unknowns.
             </h2>
           </div>
           {[
             [
               "01",
-              "Get to know the space",
-              "Read the property details, amenities and house rules before you decide.",
+              "Read the stay properly",
+              "Photos, amenities, house rules and neighbourhood notes stay in one place.",
             ],
             [
               "02",
-              "Check your dates",
-              "See availability for your whole stay, maintained by the property team.",
+              "Check before you enquire",
+              "Availability is checked against managed inventory before you start the chat.",
             ],
             [
               "03",
-              "Start a conversation",
-              "Ask questions on WhatsApp. Confirm the details directly with the team.",
+              "Confirm with a person",
+              "Your enquiry is saved first, then the property team follows up directly.",
             ],
           ].map(([n, t, d]) => (
             <div key={n}>
