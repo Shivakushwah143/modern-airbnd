@@ -1,4 +1,5 @@
 name: modern-airbnd
+
 x-api-env: &api-env
   NODE_ENV: production
   PORT: 4000
@@ -12,36 +13,30 @@ x-api-env: &api-env
   CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
   CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
   LOG_LEVEL: info
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
 services:
-  postgres:
-    image: postgres:18.4-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: modern_airbnd
-      POSTGRES_USER: modern_airbnd
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql
-    networks: [backend]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U modern_airbnd -d modern_airbnd"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    logging: &logging
-      driver: json-file
-      options: {max-size: "10m", max-file: "3"}
   migrate:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
       target: build
     environment: *api-env
-    command: ["node", "node_modules/prisma/build/index.js", "migrate", "deploy", "--schema=apps/api/prisma/schema.prisma"]
-    depends_on:
-      postgres: {condition: service_healthy}
-    networks: [backend]
+    command:
+      [
+        "node",
+        "node_modules/prisma/build/index.js",
+        "migrate",
+        "deploy",
+        "--schema=apps/api/prisma/schema.prisma",
+      ]
     restart: "no"
+    networks: [app]
+    logging: *logging
+
   api:
     build:
       context: .
@@ -51,14 +46,22 @@ services:
     environment: *api-env
     depends_on:
       migrate: {condition: service_completed_successfully}
-    networks: [backend, edge]
-    expose: ["4000"]
+    ports:
+      - "127.0.0.1:4010:4000"
+    networks: [app]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/v1/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api/v1/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
     logging: *logging
+
   web:
     build:
       context: .
@@ -71,56 +74,21 @@ services:
       NEXT_PUBLIC_SITE_URL: ${APP_ORIGIN}
     depends_on:
       api: {condition: service_healthy}
-    networks: [edge]
-    expose: ["3000"]
+    ports:
+      - "127.0.0.1:3010:3000"
+    networks: [app]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 20s
       timeout: 10s
       retries: 5
     logging: *logging
-  caddy:
-    image: caddy:2.10.2-alpine
-    restart: unless-stopped
-    environment:
-      DOMAIN: ${DOMAIN:?Set DOMAIN}
-      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL}
-    ports: ["80:80", "443:443", "443:443/udp"]
-    volumes:
-      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      web: {condition: service_healthy}
-    networks: [edge]
-    logging: *logging
-  backup:
-    image: postgres:18.4-alpine
-    restart: unless-stopped
-    environment:
-      PGHOST: postgres
-      PGUSER: modern_airbnd
-      PGDATABASE: modern_airbnd
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-    command: ["sh", "/scripts/backup-loop.sh"]
-    volumes:
-      - ./infra/scripts:/scripts:ro
-      - backups:/backups
-    depends_on:
-      postgres: {condition: service_healthy}
-    networks: [backend]
-    healthcheck:
-      test: ["CMD-SHELL", "test -n "$$(find /backups/daily -name '*.dump' -mmin -1500 -print -quit)""]
-      interval: 30m
-      timeout: 10s
-      retries: 2
-      start_period: 2m
-    logging: *logging
+
 networks:
-  backend: {internal: true}
-  edge: {}
-volumes:
-  postgres_data:
-  caddy_data:
-  caddy_config:
-  backups:
+  app: {}

@@ -106,6 +106,21 @@ The harness starts its own API and web server on ports 3401/3400 and resets the 
 
 See `docs/OPERATIONS.md`. Only Caddy exposes public ports; PostgreSQL and the API are internal. Production uses Secure/HttpOnly/SameSite=Strict cookies, origin validation, Argon2id verification, session regeneration and rate limits. Cloudinary remains external. Media uploads go directly from the authenticated browser to Cloudinary with signed parameters; the API independently fetches the resulting asset metadata before saving it.
 
+### GitHub Actions CD
+
+Production deployment runs after the CI workflow succeeds on `main`. Required GitHub Secrets:
+
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_PORT`
+- `VPS_SSH_KEY`
+- `VPS_SSH_KNOWN_HOSTS`
+- `VPS_APP_PATH`
+
+Expected VPS app directory: the existing checked-out repository path from `VPS_APP_PATH`. Keep production `.env` on the VPS beside `docker-compose.prod.yml`; it is not created or overwritten by CI/CD.
+
+First-time VPS prerequisites: install Git and Docker Compose v2, clone this repository at `VPS_APP_PATH`, create the production `.env`, add the GitHub deploy key to the server, add the server host key to `VPS_SSH_KNOWN_HOSTS`, and confirm `docker compose -f docker-compose.prod.yml up -d` works once manually.
+
 ## Source reconciliation
 
 The four supplied property specifications were used. The supplied `VoiceOps_PRD_v1.0.md` describes a different voice AI product and was excluded. A Modern Airbnd PRD was not supplied. The locked name is **Modern Airbnd**, and the locked backend is **Node.js + Express + TypeScript**.
