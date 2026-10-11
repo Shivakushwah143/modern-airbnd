@@ -3,6 +3,7 @@ import "@fontsource-variable/manrope";
 import "@fontsource-variable/fraunces";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { PublicBottomNav } from "@/components/PublicBottomNav";
 import Link from "next/link";
 import { siteUrl } from "@/lib/api";
 export const metadata: Metadata = {
@@ -62,6 +63,7 @@ export default function RootLayout({
             <span>Enquiries only. A conversation does not reserve a stay.</span>
           </div>
         </footer>
+        <PublicBottomNav />
       </body>
     </html>
   );

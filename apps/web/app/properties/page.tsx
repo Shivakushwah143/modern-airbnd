@@ -3,10 +3,12 @@ import { api, ApiError, queryString } from "@/lib/api";
 import { Search } from "@/components/Search";
 import { PropertyCard } from "@/components/Property";
 import type { Property, Location } from "@modern-airbnd/contracts";
+
 export const metadata = {
   title: "Explore properties",
   alternates: { canonical: "/properties" },
 };
+
 export default async function Properties({
   searchParams,
 }: {
@@ -19,39 +21,63 @@ export default async function Properties({
     checkOut: raw.checkOut,
   };
   const query = queryString(q);
-  const locations = await api<Location[]>("/locations");
+  const [locationResult, catalogueResult] = await Promise.allSettled([
+    api<Location[]>("/locations"),
+    api<Property[]>("/properties"),
+  ]);
+  const catalogue =
+    catalogueResult.status === "fulfilled" ? catalogueResult.value : [];
+  const propertyLocations = Array.from(
+    new Map(
+      catalogue.map((property) => [property.location.id, property.location]),
+    ).values(),
+  );
+  const locations =
+    locationResult.status === "fulfilled" && locationResult.value.length
+      ? locationResult.value
+      : propertyLocations;
   let properties: Property[] = [];
-  let error = "";
+  let error =
+    catalogueResult.status === "rejected"
+      ? "The property service is unavailable right now."
+      : locationResult.status === "rejected"
+        ? "Destination details are being refreshed."
+      : "";
+
   try {
-    properties = await api<Property[]>(`/properties?${query}`);
+    properties = query ? await api<Property[]>(`/properties?${query}`) : catalogue;
   } catch (e) {
     if (e instanceof ApiError && e.status === 400) error = e.message;
-    else throw e;
+    else error = "The property service is unavailable right now.";
   }
+
   const name = locations.find((l) => l.slug === q.location)?.name;
   const allUnavailable =
     properties.length > 0 &&
     properties.every((p) => p.availability.status === "UNAVAILABLE");
+
   return (
     <div className="container section">
-      <p className="eyebrow">THE COLLECTION</p>
-      <h1>{name ? `Stays in ${name}` : "Find a space for your stay."}</h1>
+      <p className="eyebrow">{name ? "City results" : "All properties"}</p>
+      <h1>
+        {name ? `Properties in ${name}` : "Choose a city, then compare stays."}
+      </h1>
       <Search key={query} locations={locations} initial={q} compact />
       <div className="results-summary">
         <span>
           {properties.length}{" "}
           {properties.length === 1 ? "property" : "properties"}
-          {q.checkIn && q.checkOut ? ` · ${q.checkIn} — ${q.checkOut}` : ""}
+          {q.checkIn && q.checkOut ? ` / ${q.checkIn} to ${q.checkOut}` : ""}
         </span>
         <span className="muted">
           {q.checkIn
             ? "Available stays shown first"
-            : "Explore now. Choose dates when you’re ready."}
+            : "Select a city or browse all destinations."}
         </span>
       </div>
       {error && (
         <p className="notice error" role="alert">
-          {error} Edit your dates above to try again.
+          {error} Edit your search above to try again.
         </p>
       )}
       {allUnavailable && (
@@ -94,10 +120,13 @@ export default async function Properties({
       ) : (
         !error && (
           <div className="empty-state">
-            <h2>No properties are listed here yet.</h2>
-            <p>Explore another location or contact the team for help.</p>
+            <h2>No matching properties are listed yet.</h2>
+            <p>Choose another destination or contact the team for help.</p>
             <Link className="button primary" href="/properties">
               Explore all properties
+            </Link>
+            <Link className="button secondary" href="/locations">
+              View destinations
             </Link>
           </div>
         )

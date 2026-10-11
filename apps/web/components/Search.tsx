@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, useEffect } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Location } from "@modern-airbnd/contracts";
 import { DateRange } from "./DateRange";
@@ -68,6 +68,8 @@ export function Search({
     });
   }
 
+  const selectedLocation = locations.find((l) => l.slug === location);
+
   return (
     <>
       <form
@@ -76,23 +78,22 @@ export function Search({
         id="search"
       >
         <div className="search-fields">
-          {locations.length > 0 && (
-            <button
-              type="button"
-              className="search-field"
-              onClick={() => setModal("location")}
-            >
-              <Icon name="pin" />
-              <span>
-                <small>Location</small>
-                <strong>
-                  {locations.find((l) => l.slug === location)?.name ||
-                    "All locations"}
-                </strong>
-              </span>
-              <span className="chevron">⌄</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className="search-field"
+            onClick={() => locations.length && setModal("location")}
+            disabled={!locations.length}
+          >
+            <Icon name="pin" />
+            <span>
+              <small>Where are you going?</small>
+              <strong>
+                {selectedLocation?.name ||
+                  (locations.length ? "Choose city" : "City list unavailable")}
+              </strong>
+            </span>
+            <span className="chevron">v</span>
+          </button>
           <button
             type="button"
             className="search-field"
@@ -103,7 +104,7 @@ export function Search({
               <small>Dates</small>
               <strong>{start && end ? `${start} to ${end}` : "Add dates"}</strong>
             </span>
-            <span className="chevron">⌄</span>
+            <span className="chevron">v</span>
           </button>
           {!compact && (
             <div className="search-field guest-stepper">
@@ -143,10 +144,10 @@ export function Search({
       <Dialog
         open={modal === "location"}
         onClose={() => setModal(null)}
-        title="Choose a location"
+        title="Choose a destination"
       >
         <label>
-          Find a location
+          Find a city
           <input
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
@@ -160,7 +161,7 @@ export function Search({
               setModal(null);
             }}
           >
-            All locations
+            All destinations
           </button>
           {locations
             .filter((l) =>
@@ -185,6 +186,11 @@ export function Search({
                 {location === l.slug && <Icon name="check" />}
               </button>
             ))}
+          {!locations.length && (
+            <p className="notice error">
+              Destinations could not be loaded. Please try again shortly.
+            </p>
+          )}
         </div>
       </Dialog>
       <Dialog

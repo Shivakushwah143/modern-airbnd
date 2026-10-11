@@ -1,10 +1,13 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
 export function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const publicHeader = !pathname.startsWith("/admin");
   const links = [
     ["/properties", "Stays"],
     ["/locations", "Locations"],
@@ -13,7 +16,7 @@ export function Header() {
     ["/contact", "Contact"],
   ];
   return (
-    <header className="site-header">
+    <header className={`site-header ${publicHeader ? "public-header" : ""}`}>
       <div className="container header-inner">
         <Link href="/" className="brand" aria-label="Modern Airbnd home">
           <span className="brand-mark">
@@ -34,6 +37,12 @@ export function Header() {
           <Icon name="chat" size={18} />
           Get in touch
         </Link>
+        {publicHeader && (
+          <Link className="header-quick-contact" href="/contact">
+            <Icon name="chat" size={17} />
+            <span>Contact</span>
+          </Link>
+        )}
         <button
           className="icon-btn mobile-menu"
           aria-label="Open menu"

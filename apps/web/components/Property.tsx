@@ -61,7 +61,7 @@ export function PropertyCard({
         <div className="card-foot">
           <AvailabilityBadge value={p.availability} />
           <Link className="card-link" href={href}>
-            View stay
+            View property
           </Link>
         </div>
       </div>

@@ -39,7 +39,7 @@ export function PropertyBody({
         </header>
         <aside className="enquiry-panel">
           <p className="eyebrow">ENQUIRE</p>
-          <h2>Check dates, then speak with the team.</h2>
+          <h2>Check availability, then speak with the team.</h2>
           {!preview && (
             <Search
               locations={[]}
