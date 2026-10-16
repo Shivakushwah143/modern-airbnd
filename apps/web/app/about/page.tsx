@@ -6,7 +6,7 @@ export default async function About() {
   const s = await api<Settings>("/settings/public");
   return (
     <div className="container section narrow">
-      <p className="eyebrow">MODERN AIRBND</p>
+      <p className="eyebrow">Modern Stayz</p>
       <h1>
         Know the space.
         <br />

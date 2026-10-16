@@ -18,7 +18,7 @@ export function Header() {
   return (
     <header className={`site-header ${publicHeader ? "public-header" : ""}`}>
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="Modern Airbnd home">
+        <Link href="/" className="brand" aria-label="Modern Stayz home">
           <span className="brand-mark">
             <Icon size={25} />
           </span>
@@ -54,7 +54,7 @@ export function Header() {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Explore Modern Airbnd"
+        title="Explore Modern Stayz"
       >
         <nav className="mobile-links">
           {links.map(([href, label]) => (

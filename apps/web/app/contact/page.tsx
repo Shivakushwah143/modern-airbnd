@@ -15,7 +15,7 @@ export default async function Contact() {
         {s.defaultWhatsappNumber && (
           <a
             className="button primary"
-            href={`https://wa.me/${s.defaultWhatsappNumber.slice(1)}?text=${encodeURIComponent("Hi, I would like to enquire about a stay with Modern Airbnd.")}`}
+            href={`https://wa.me/${s.defaultWhatsappNumber.slice(1)}?text=${encodeURIComponent("Hi, I would like to enquire about a stay with Modern Stayz.")}`}
             target="_blank"
             rel="noopener noreferrer"
           >

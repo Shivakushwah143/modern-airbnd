@@ -189,7 +189,7 @@ app.get("/api/v1/locations", async (_req, res) =>
 );
 app.get("/api/v1/settings/public", async (_req, res) => {
   const { id: _id, ...s } = await settings();
-  res.json({ data: { ...s, brandName: "Modern Airbnd" } });
+  res.json({ data: { ...s, brandName: "Modern Stayz" } });
 });
 app.get(
   ["/api/v1/properties", "/api/v1/properties/search"],

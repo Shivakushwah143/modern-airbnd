@@ -9,15 +9,15 @@ import { siteUrl } from "@/lib/api";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "Modern Airbnd — Find a stay that feels right",
-    template: "%s | Modern Airbnd",
+    default: "Modern Stayz — Find a stay that feels right",
+    template: "%s | Modern Stayz",
   },
   description:
     "Explore properties, check your dates and enquire directly with the property team.",
   openGraph: {
-    siteName: "Modern Airbnd",
+    siteName: "Modern Stayz",
     type: "website",
-    title: "Modern Airbnd",
+    title: "Modern Stayz",
     description: "Discover properties. Check availability. Enquire directly.",
   },
 };
@@ -59,7 +59,7 @@ export default function RootLayout({
             </nav>
           </div>
           <div className="container footer-bottom">
-            <span>© {new Date().getFullYear()} Modern Airbnd</span>
+            <span>© {new Date().getFullYear()} Modern Stayz</span>
             <span>Enquiries only. A conversation does not reserve a stay.</span>
           </div>
         </footer>

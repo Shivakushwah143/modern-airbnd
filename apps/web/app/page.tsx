@@ -2,11 +2,22 @@ import Link from "next/link";
 import { api, emptySettings } from "@/lib/api";
 import type { Property, Location, Settings } from "@modern-airbnd/contracts";
 import { Search } from "@/components/Search";
-import { PropertyCard } from "@/components/Property";
 import { Photo } from "@/components/Photo";
 import { Icon } from "@/components/Icon";
 import { Operator } from "@/components/Trust";
 import { RetryButton } from "@/components/RetryButton";
+
+function propertyHref(property: Property) {
+  return `/properties/${property.slug}`;
+}
+
+function stayMeta(property: Property) {
+  return [
+    `${property.bedrooms} bedrooms`,
+    `${property.bathrooms} baths`,
+    `up to ${property.maxGuests} guests`,
+  ].join(" / ");
+}
 
 export default async function Home() {
   const [propertyResult, locationResult, settingsResult] = await Promise.allSettled([
@@ -29,266 +40,223 @@ export default async function Home() {
   const hasLoadError = propertyResult.status === "rejected";
   const hasPartialLocationError =
     propertyResult.status === "fulfilled" && locationResult.status === "rejected";
-  const hero = properties.find((p) => p.media.length);
-  const featured = properties.slice(0, 6);
   const activeLocations = locations.filter((location) =>
     properties.some((property) => property.location.id === location.id),
   );
+  const hero =
+    properties.find((property) => property.media.some((media) => media.isCover)) ||
+    properties.find((property) => property.media.length);
+  const showcase = properties.filter((property) => property.media.length).slice(0, 5);
+  const fallbackShowcase = properties.slice(0, 5);
+  const featured = showcase.length ? showcase : fallbackShowcase;
 
   return (
-    <>
-      <section className={`guest-hero ${hero ? "hero-with-photo" : ""}`}>
+    <div className="landing-page">
+      <section className={`landing-hero ${hero ? "has-photo" : ""}`}>
         {hero && (
-          <div className="guest-hero-bg" aria-hidden="true">
+          <div className="landing-hero-bg" aria-hidden="true">
             <Photo media={hero.media[0]} priority />
           </div>
         )}
-        <div className="guest-hero-inner">
-          <div className="hero-copy">
-            <p className="eyebrow">Modern Airbnd / curated Indian stays</p>
-            <h1>Thoughtfully curated stays across India.</h1>
-            <p className="hero-description">
-              Pick a destination first, compare stays in that city, check
-              dates, then send an enquiry for the team to confirm.
+        <div className="container landing-hero-inner">
+          <div className="landing-hero-copy">
+            <p className="eyebrow">Modern Stayz / enquiry-first stays</p>
+            <h1>Find a stay that feels considered.</h1>
+            <p>
+              Browse real published properties by city, check dates, and send
+              an enquiry for the property team to confirm.
             </p>
             <Search locations={activeLocations} />
-            <div className="hero-note">
-              <Icon name="chat" size={17} /> Phase 1: saved enquiry before
-              WhatsApp. No instant reservation.
+            <div className="landing-hero-note">
+              <Icon name="chat" size={17} />
+              Enquiries are saved before WhatsApp opens. No instant reservation.
             </div>
           </div>
-          <div className="hero-visual" aria-label="Featured property">
-            {hero ? (
-              <Photo media={hero.media[0]} priority />
-            ) : (
-              <div className="hero-empty">
-                <span className="eyebrow">Sample preview</span>
-                <h2>
-                  City-first discovery
-                  <br />
-                  starts here.
-                </h2>
-                <p>Property photography appears when the team publishes a stay.</p>
-                <span className="empty-caption">Sample image area</span>
-              </div>
-            )}
-            {hero && (
-              <Link href={`/properties/${hero.slug}`} className="hero-caption">
-                <span>{hero.location.name}</span>
-                <strong>{hero.name}</strong>
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="container destination-section"
-        aria-labelledby="destination-title"
-      >
-        <div className="destination-heading">
-          <div>
-            <p className="eyebrow">Regions ready for enquiry</p>
-            <h2 id="destination-title">Pick a Destination</h2>
-            <p className="muted">
-              Only cities with active, published properties are shown.
-            </p>
-          </div>
-          <Link href="/locations" className="text-link">
-            All destinations
-          </Link>
-        </div>
-        {hasLoadError ? (
-          <div className="notice error destination-notice" role="alert">
-            <h3>Destinations could not be loaded.</h3>
-            <p>
-              The destination service is unavailable right now. Retry the
-              section, or contact the team for help.
-            </p>
-            <div className="destination-notice-actions">
-              <RetryButton label="Retry destinations" />
-              <Link href="/contact" className="text-link">
-                Contact the team
-              </Link>
-            </div>
-          </div>
-        ) : activeLocations.length ? (
-          <>
-            {hasPartialLocationError && (
-              <p className="notice destination-note">
-                Destination details are being refreshed. Cities below are
-                derived from currently published properties.
-              </p>
-            )}
-            <div className="destination-circles">
-              {activeLocations.map((location) => {
-                const cityProperties = properties.filter(
-                  (property) => property.location.id === location.id,
-                );
-                const image = cityProperties.find(
-                  (property) => property.media.length,
-                );
-                const count = cityProperties.length;
-                return (
-                  <Link
-                    className="destination-card"
-                    href={`/properties?location=${location.slug}`}
-                    key={location.id}
-                  >
-                    <span className="destination-photo">
-                      {image ? (
-                        <Photo media={image.media[0]} />
-                      ) : (
-                        <Icon name="pin" size={28} />
-                      )}
-                    </span>
-                    <strong>{location.name}</strong>
-                    <small>
-                      {count} {count === 1 ? "stay" : "stays"}
-                    </small>
-                  </Link>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="empty-state">
-            <h3>No destinations are published yet.</h3>
-            <p>Please check back once the property team publishes a stay.</p>
-          </div>
-        )}
-      </section>
-      {hasLoadError && (
-        <section className="container section">
-          <div className="notice error" role="alert">
-            <h2>We could not load the guest catalogue.</h2>
-            <p>
-              The property service is unavailable right now. Please retry, or
-              contact the team for help with destinations and availability.
-            </p>
-            <Link href="/contact" className="text-link">
-              Contact the team
+          {hero && (
+            <Link href={propertyHref(hero)} className="landing-hero-card">
+              <span>{hero.location.name}</span>
+              <strong>{hero.name}</strong>
+              <small>{stayMeta(hero)}</small>
             </Link>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
-      <section className="trust-strip">
+      <section className="landing-section destination-section" aria-labelledby="destination-title">
         <div className="container">
-          <span>
-            <Icon name="pin" />
-            Choose city
-          </span>
-          <span>
-            <Icon name="home" />
-            Browse matching properties
-          </span>
-          <span>
-            <Icon name="chat" />
-            Send enquiry
-          </span>
+          <div className="landing-section-head">
+            <div>
+              <p className="eyebrow">Published destinations</p>
+              <h2 id="destination-title">Pick a Destination</h2>
+            </div>
+            <Link href="/locations" className="text-link">
+              All destinations
+            </Link>
+          </div>
+          {hasLoadError ? (
+            <div className="notice error destination-notice" role="alert">
+              <h3>Destinations could not be loaded.</h3>
+              <p>
+                The destination service is unavailable right now. Retry the
+                section, or contact the team for help.
+              </p>
+              <div className="destination-notice-actions">
+                <RetryButton label="Retry destinations" />
+                <Link href="/contact" className="text-link">
+                  Contact the team
+                </Link>
+              </div>
+            </div>
+          ) : activeLocations.length ? (
+            <>
+              {hasPartialLocationError && (
+                <p className="notice destination-note">
+                  Destination details are being refreshed. Cities below are
+                  derived from currently published properties.
+                </p>
+              )}
+              <div className="landing-destinations">
+                {activeLocations.map((location) => {
+                  const cityProperties = properties.filter(
+                    (property) => property.location.id === location.id,
+                  );
+                  const image = cityProperties.find(
+                    (property) => property.media.length,
+                  );
+                  return (
+                    <Link
+                      className="landing-destination"
+                      href={`/properties?location=${location.slug}`}
+                      key={location.id}
+                    >
+                      <span className="landing-destination-photo">
+                        {image ? (
+                          <Photo media={image.media[0]} />
+                        ) : (
+                          <Icon name="pin" size={30} />
+                        )}
+                      </span>
+                      <strong>{location.name}</strong>
+                      {location.state && <small>{location.state}</small>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="empty-state">
+              <h3>No destinations are published yet.</h3>
+              <p>Please check back once the property team publishes a stay.</p>
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="container section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Curated properties</p>
-            <h2>Useful details before you enquire.</h2>
+      <section className="landing-section landing-showcase" aria-labelledby="showcase-title">
+        <div className="container">
+          <div className="landing-section-head">
+            <div>
+              <p className="eyebrow">Property edit</p>
+              <h2 id="showcase-title">Real stays, shown with room to breathe.</h2>
+            </div>
+            <Link href="/properties" className="text-link">
+              Explore all properties
+            </Link>
           </div>
-          <Link href="/properties" className="text-link">
-            Explore all properties
-          </Link>
-        </div>
-        {properties.some((p) => p.isDemo) && (
-          <p className="notice">
-            You are viewing a demonstration catalogue. Demo properties are
-            fictional and cannot be enquired about.
-          </p>
-        )}
-        {featured.length ? (
-          <div className="property-grid">
-            {featured.map((p) => (
-              <PropertyCard key={p.id} property={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <h3>Our collection is taking shape.</h3>
-            <p>
-              The property team has not published any stays yet. Please check
-              back soon.
+          {properties.some((property) => property.isDemo) && (
+            <p className="notice">
+              You are viewing a demonstration catalogue. Demo properties are
+              fictional and cannot be enquired about.
             </p>
-            <Link href="/contact" className="button secondary">
-              Get in touch
-            </Link>
-          </div>
-        )}
+          )}
+          {hasLoadError && (
+            <div className="notice error" role="alert">
+              <h3>We could not load the guest catalogue.</h3>
+              <p>
+                The property service is unavailable right now. Please retry, or
+                contact the team for destinations and availability.
+              </p>
+            </div>
+          )}
+          {featured.length ? (
+            <div className="editorial-properties">
+              {featured.map((property, index) => (
+                <article className="editorial-property" key={property.id}>
+                  <Link
+                    className="editorial-property-photo"
+                    href={propertyHref(property)}
+                    aria-label={`View ${property.name}`}
+                  >
+                    <Photo media={property.media[0]} demo={property.isDemo} />
+                  </Link>
+                  <div className="editorial-property-copy">
+                    <span className="editorial-index">0{index + 1}</span>
+                    <p className="eyebrow">
+                      {property.area || property.location.name}
+                      {property.area ? ` / ${property.location.name}` : ""}
+                    </p>
+                    <h3>
+                      <Link href={propertyHref(property)}>{property.name}</Link>
+                    </h3>
+                    <p>{property.shortDescription || property.propertyType}</p>
+                    <p className="facts">
+                      <Icon name="bed" size={18} />
+                      {stayMeta(property)}
+                    </p>
+                    <Link className="button secondary" href={propertyHref(property)}>
+                      View property
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>Our collection is taking shape.</h3>
+              <p>
+                The property team has not published any stays yet. Please check
+                back soon.
+              </p>
+              <Link href="/contact" className="button secondary">
+                Get in touch
+              </Link>
+            </div>
+          )}
+        </div>
       </section>
 
-      <section className="container section locations-section">
-        <div>
-          <p className="eyebrow">City-first discovery</p>
-          <h2>Start with where you want to stay.</h2>
-          <p className="muted">
-            Selecting a city keeps results focused on properties in that city.
-          </p>
-        </div>
-        <div className="location-grid">
-          {activeLocations.map((l, i) => (
-            <Link
-              href={`/properties?location=${l.slug}`}
-              className="location-tile"
-              key={l.id}
-            >
-              <span className="location-number">0{i + 1}</span>
-              <Icon name="pin" />
-              <h3>{l.name}</h3>
-              <span>{l.state}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="container section">
-        <div className="how-grid">
+      <section className="landing-story">
+        <div className="container landing-story-grid">
           <div>
-            <p className="eyebrow">How enquiries work</p>
+            <p className="eyebrow">Operator note</p>
             <h2>
-              Check availability.
-              <br />
-              Confirm with the team.
+              Hospitality is confirmed by people, not by a checkout button.
             </h2>
           </div>
-          {[
-            [
-              "01",
-              "Choose a city",
-              "Pick a destination and keep the results focused on that city.",
-            ],
-            [
-              "02",
-              "Review the property",
-              "Check photos, capacity, amenities, rules, local context and availability.",
-            ],
-            [
-              "03",
-              "Send an enquiry",
-              "Your request is saved before WhatsApp opens. The team confirms the stay.",
-            ],
-          ].map(([n, t, d]) => (
-            <div key={n}>
-              <span className="step-number">{n}</span>
-              <h3>{t}</h3>
-              <p>{d}</p>
+          <div>
+            {settings.operatorName && <h3>{settings.operatorName}</h3>}
+            {settings.aboutText ? (
+              <p>{settings.aboutText}</p>
+            ) : (
+              <p>
+                Modern Stayz publishes managed stays with city, property,
+                rules, local context and availability details so guests can
+                enquire with the team before making plans.
+              </p>
+            )}
+            <div className="landing-story-steps" aria-label="Enquiry steps">
+              <span>Choose city</span>
+              <span>Review stay</span>
+              <span>Send enquiry</span>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      <div className="container">
+      <div className="container landing-operator">
         <Operator settings={settings} locations={locations} />
       </div>
+
       <section className="container">
         <div className="contact-band">
           <div>
@@ -301,6 +269,6 @@ export default async function Home() {
           </Link>
         </div>
       </section>
-    </>
+    </div>
   );
 }

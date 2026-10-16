@@ -11,7 +11,7 @@ export function PropertyPassport({
   return (
     <section className="property-passport" aria-label="Property passport">
       <div className="passport-title">
-        <span>MODERN AIRBND</span>
+        <span>Modern Stayz</span>
         <h2>Property passport</h2>
       </div>
       <dl>
@@ -169,7 +169,7 @@ export function Operator({
     <section className="operator-section">
       <div>
         <p className="eyebrow">THE PEOPLE BEHIND THE STAY</p>
-        <h2>Meet Modern Airbnd</h2>
+        <h2>Meet Modern Stayz</h2>
         {s.operatorName && <h3>{s.operatorName}</h3>}
         {s.aboutText && <p className="prose">{s.aboutText}</p>}
         {locations.length > 0 && (

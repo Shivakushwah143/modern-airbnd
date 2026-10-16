@@ -1,4 +1,4 @@
-# Modern Airbnd — Phase 1
+# Modern Stayz — Phase 1
 
 A mobile-first property portfolio, date-based availability service and owner-only property management workspace. Visitors browse by location, inspect properties and enquire on WhatsApp. There is no booking engine, payment processing or OTA synchronization.
 
@@ -123,6 +123,6 @@ First-time VPS prerequisites: install Git and Docker Compose v2, clone this repo
 
 ## Source reconciliation
 
-The four supplied property specifications were used. The supplied `VoiceOps_PRD_v1.0.md` describes a different voice AI product and was excluded. A Modern Airbnd PRD was not supplied. The locked name is **Modern Airbnd**, and the locked backend is **Node.js + Express + TypeScript**.
+The four supplied property specifications were used. The supplied `VoiceOps_PRD_v1.0.md` describes a different voice AI product and was excluded. A Modern Stayz PRD was not supplied. The locked name is **Modern Stayz**, and the locked backend is **Node.js + Express + TypeScript**.
 
 Real property photographs, business information, WhatsApp destinations, legal policies, Cloudinary credentials, domain and VPS access must be supplied by the operator. This repository contains no client secrets and makes no invented property/review claims.

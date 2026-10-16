@@ -1,7 +1,7 @@
 import { OwnerLeadForm } from "./OwnerLeadForm";
 
 export const metadata = {
-  title: "List your property | Modern Airbnd",
+  title: "List your property | Modern Stayz",
   description: "Co-hosting and managed stay services for property owners.",
 };
 
@@ -12,7 +12,7 @@ export default function Owners() {
         <p className="eyebrow">FOR PROPERTY OWNERS</p>
         <h1>Managed stays without building an operations team.</h1>
         <p className="intro">
-          Modern Airbnd helps owners present, manage and convert stay enquiries
+          Modern Stayz helps owners present, manage and convert stay enquiries
           through a direct, human-led process.
         </p>
       </section>

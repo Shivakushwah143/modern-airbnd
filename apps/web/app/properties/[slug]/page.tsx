@@ -50,7 +50,7 @@ export async function generateMetadata({
       p.seoDescription || p.shortDescription || p.description.slice(0, 160),
     alternates: { canonical: `/properties/${slug}` },
     openGraph: {
-      title: `${p.name} | Modern Airbnd`,
+      title: `${p.name} | Modern Stayz`,
       description: p.shortDescription,
       images: p.media[0] ? [p.media[0].secureUrl] : [],
     },

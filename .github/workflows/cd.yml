@@ -1,8 +1,8 @@
-name: Modern Airbnd production deploy
+name: Modern Stayz production deploy
 
 on:
   workflow_run:
-    workflows: ["Modern Airbnd quality gate"]
+    workflows: ["Modern Stayz quality gate"]
     branches: [main]
     types: [completed]
 

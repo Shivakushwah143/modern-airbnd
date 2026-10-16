@@ -311,7 +311,7 @@ try {
       supportPhone: phone,
       supportEmail: "hello.demo@modern-airbnd.test",
       businessAddress: "Demo operations desk, Gurgaon and Delhi",
-      operatorName: "Modern Airbnd Demo Team",
+      operatorName: "Modern Stayz Demo Team",
       aboutText:
         "Synthetic demo workspace for reviewing managed stays, enquiries, operations and owner workflows.",
       privacyText: "Demo privacy text for local review only.",
@@ -322,7 +322,7 @@ try {
       supportPhone: phone,
       supportEmail: "hello.demo@modern-airbnd.test",
       businessAddress: "Demo operations desk, Gurgaon and Delhi",
-      operatorName: "Modern Airbnd Demo Team",
+      operatorName: "Modern Stayz Demo Team",
       aboutText:
         "Synthetic demo workspace for reviewing managed stays, enquiries, operations and owner workflows.",
     },
@@ -414,7 +414,7 @@ try {
           checkInInfo: "Coordinated check-in after 2 PM.",
           checkOutInfo: "Standard check-out by 11 AM.",
           propertyNotes: "Synthetic demo property. Not a real listing.",
-          seoTitle: `${demo.name} | Modern Airbnd Demo`,
+          seoTitle: `${demo.name} | Modern Stayz Demo`,
           seoDescription: demo.shortDescription,
           isDemo: true,
           status: "PUBLISHED",
@@ -652,7 +652,7 @@ try {
   }
 
   console.log(
-    "Modern Airbnd seed complete. Demo inventory:",
+    "Modern Stayz seed complete. Demo inventory:",
     process.env.SEED_DEMO === "true",
   );
 } finally {

@@ -410,7 +410,7 @@ export default function Admin() {
         <span className="brand-mark">
           <Icon name="shield" size={30} />
         </span>
-        <p className="eyebrow">MODERN AIRBND</p>
+        <p className="eyebrow">Modern Stayz</p>
         <h1>Owner access</h1>
         <p className="muted">Manage your properties and availability.</p>
         <form

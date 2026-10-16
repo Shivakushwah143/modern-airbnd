@@ -1,4 +1,4 @@
-# Modern Airbnd — delivery status
+# Modern Stayz — delivery status
 
 Included: mobile range calendar and recovery actions, gallery improvements, property passport, factual trust and local context, guided admin setup, private preview, publication readiness and explicit inventory modes with additive migration.
 
