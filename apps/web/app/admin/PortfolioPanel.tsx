@@ -36,6 +36,9 @@ type TestimonialRow = {
   quote: string;
   mediaType: "IMAGE" | "VIDEO";
   mediaUrl: string;
+  consentConfirmed: boolean;
+  consentRecordedAt: string | null;
+  consentSource: string;
   sortOrder: number;
   isPublished: boolean;
 };
@@ -78,8 +81,10 @@ const emptyTestimonial = {
   quote: "",
   mediaType: "IMAGE" as "IMAGE" | "VIDEO",
   mediaUrl: "",
+  consentConfirmed: false,
+  consentSource: "",
   sortOrder: 0,
-  isPublished: true,
+  isPublished: false,
 };
 const emptyCase = {
   propertyId: "",
@@ -576,14 +581,56 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
                 )
               }
             />
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={testimonialDraft.consentConfirmed}
+                onChange={(e) =>
+                  setTestimonialDraft({
+                    ...testimonialDraft,
+                    consentConfirmed: e.target.checked,
+                  })
+                }
+              />
+              I confirm the owner gave explicit consent for this screenshot or
+              video to be published (recorded on {new Date().toLocaleDateString("en-CA")})
+            </label>
+            <label>
+              How was the owner&rsquo;s consent recorded?
+              <input
+                maxLength={120}
+                placeholder="e.g. WhatsApp approval from the owner"
+                value={testimonialDraft.consentSource}
+                onChange={(e) =>
+                  setTestimonialDraft({
+                    ...testimonialDraft,
+                    consentSource: e.target.value,
+                  })
+                }
+              />
+            </label>
             <PublishedToggle
               checked={testimonialDraft.isPublished}
-              disabled={false}
+              disabled={
+                !testimonialDraft.mediaUrl.trim() ||
+                !testimonialDraft.consentConfirmed ||
+                !testimonialDraft.consentSource.trim()
+              }
               onChange={(value) =>
                 setTestimonialDraft({ ...testimonialDraft, isPublished: value })
               }
               label="Show on the public testimonials page"
             />
+            {testimonialDraft.isPublished &&
+              (!testimonialDraft.mediaUrl.trim() ||
+                !testimonialDraft.consentConfirmed ||
+                !testimonialDraft.consentSource.trim()) && (
+                <p className="muted small">
+                  Publishing requires attached media plus the owner&rsquo;s
+                  recorded consent and consent source. The server rejects any
+                  other combination.
+                </p>
+              )}
             <div className="row-actions">
               <button className="button primary" type="submit">
                 Save testimonial
@@ -604,14 +651,17 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
               <strong>{t.ownerName}</strong>{" "}
               <span className="muted small">
                 {t.city && `${t.city} · `}
-                {t.mediaType === "VIDEO" ? "video" : "image"}
+                {t.mediaType === "VIDEO" ? "video" : "image"} ·{" "}
+                {t.consentConfirmed
+                  ? `consent recorded${t.consentRecordedAt ? ` ${t.consentRecordedAt.slice(0, 10)}` : ""}`
+                  : "no consent recorded"}
               </span>
               {!t.isPublished && <span className="badge draft">Draft</span>}
             </div>
             <div className="row-actions">
               <PublishedToggle
                 checked={t.isPublished}
-                disabled={false}
+                disabled={!t.mediaUrl.trim() || !t.consentConfirmed || !t.consentSource.trim()}
                 onChange={(value) =>
                   void run(async () => {
                     await api(`/admin/portfolio/testimonials/${t.id}`, {
@@ -632,6 +682,8 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
                     quote: t.quote,
                     mediaType: t.mediaType,
                     mediaUrl: t.mediaUrl,
+                    consentConfirmed: t.consentConfirmed,
+                    consentSource: t.consentSource,
                     sortOrder: t.sortOrder,
                     isPublished: t.isPublished,
                     id: t.id,
@@ -640,6 +692,29 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
               >
                 Edit
               </button>
+              {t.mediaUrl && (
+                <button
+                  className="button secondary"
+                  onClick={() =>
+                    ask(
+                      "Redact media?",
+                      `The attached ${t.mediaType === "VIDEO" ? "video" : "screenshot"} for ${t.ownerName} will be removed and the testimonial returned to draft. Use this when a screenshot exposes private details; you can upload a redacted replacement afterwards.`,
+                      async () => {
+                        await api(`/admin/portfolio/testimonials/${t.id}`, {
+                          method: "PATCH",
+                          body: JSON.stringify({
+                            mediaUrl: "",
+                            isPublished: false,
+                          }),
+                        });
+                        await load();
+                      },
+                    )
+                  }
+                >
+                  Redact media
+                </button>
+              )}
               <button
                 className="button danger"
                 onClick={() =>

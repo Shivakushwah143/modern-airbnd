@@ -49,6 +49,7 @@ export const NAV_LINKS: Record<NavMode, NavLink[]> = {
     { href: "/", label: "Explore", icon: "home" },
     { href: "/stays", label: "Stays", icon: "bed" },
     { href: "/locations", label: "Destinations", icon: "pin" },
+    { href: "/portfolio", label: "For Owners", icon: "home" },
     { href: "/about", label: "About", icon: "shield" },
     { href: "/contact", label: "Contact", icon: "chat" },
   ],
@@ -96,14 +97,26 @@ export function isNavActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Header call-to-action per mode (sits right on desktop and in the menu sheet). */
-export function headerCta(mode: NavMode): NavLink {
+/** Header call-to-action(s) per mode (right side on desktop and in the menu
+ * sheet). Home/neutral surfaces both journeys (70% owner / 30% guest brand
+ * positioning): the guest action first, the owner action right beside it. */
+export function headerCtas(mode: NavMode): NavLink[] {
   switch (mode) {
     case "owner":
-      return { href: "/owners", label: "List your property", icon: "plus" };
+      return [{ href: "/owners", label: "List your property", icon: "plus" }];
     case "admin":
-      return { href: "/admin", label: "Workspace", icon: "shield" };
+      return [{ href: "/admin", label: "Workspace", icon: "shield" }];
+    case "guest":
+      // Book a Stay leads straight into the searchable city journey; the
+      // contextual Book Now lives on the property itself.
+      return [
+        { href: "/stays", label: "Book a Stay", icon: "calendar" },
+        { href: "/owners", label: "List your property", icon: "plus" },
+      ];
     default:
-      return { href: "/contact", label: "Get in touch", icon: "chat" };
+      return [
+        { href: "/stays", label: "Book a Stay", icon: "calendar" },
+        { href: "/owners", label: "List your property", icon: "plus" },
+      ];
   }
 }

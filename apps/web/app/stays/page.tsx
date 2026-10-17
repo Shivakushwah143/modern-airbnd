@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { api, queryString } from "@/lib/api";
 import { Search } from "@/components/Search";
 import { CityIcon } from "@/components/CityIcon";
-import { Photo } from "@/components/Photo";
 import type { Location, Property } from "@modern-airbnd/contracts";
 
 export const metadata: Metadata = {
@@ -24,6 +23,7 @@ export default async function StaysHub({
     location: raw.location,
     checkIn: raw.checkIn,
     checkOut: raw.checkOut,
+    guests: raw.guests,
   };
 
   const [locationResult, propertyResult] = await Promise.allSettled([
@@ -44,12 +44,14 @@ export default async function StaysHub({
       : derivedLocations;
 
   // Canonical city URLs: /stays?location=goa → /stays/goa (FR-037).
+  // Dates and guest count travel along (QA-007).
   if (query.location) {
     const match = locations.find((l) => l.slug === query.location);
     if (match) {
       const qs = queryString({
         checkIn: query.checkIn,
         checkOut: query.checkOut,
+        guests: query.guests,
       });
       redirect(`/stays/${match.slug}${qs ? `?${qs}` : ""}`);
     }
@@ -92,26 +94,28 @@ export default async function StaysHub({
         {cities.length > 0 ? (
           <div className="city-icon-grid">
             {cities.map(({ location, stays }) => {
-              const cover = stays.find((p) => p.media.length);
+              const cityQs = queryString({
+                checkIn: query.checkIn,
+                checkOut: query.checkOut,
+                guests: query.guests,
+              });
               return (
-                <Link
-                  key={location.id}
-                  href={`/stays/${location.slug}`}
-                  className="city-icon-tile"
-                >
-                  <span className="city-icon-art">
-                    {cover ? (
-                      <Photo media={cover.media[0]} />
-                    ) : (
-                      <CityIcon slug={location.slug} />
-                    )}
-                  </span>
-                  <strong>{location.name}</strong>
-                  <small>
-                    {stays.length} {stays.length === 1 ? "stay" : "stays"}
-                    {location.state ? ` · ${location.state}` : ""}
-                  </small>
-                </Link>
+              <Link
+                key={location.id}
+                href={`/stays/${location.slug}${cityQs ? `?${cityQs}` : ""}`}
+                className="city-icon-tile"
+              >
+                {/* QA-008: the approved city illustration is always used; property
+                    cover photos never substitute for the city icon. */}
+                <span className="city-icon-art" aria-hidden="true">
+                  <CityIcon slug={location.slug} />
+                </span>
+                <strong>{location.name}</strong>
+                <small>
+                  {stays.length} {stays.length === 1 ? "stay" : "stays"}
+                  {location.state ? ` · ${location.state}` : ""}
+                </small>
+              </Link>
               );
             })}
           </div>

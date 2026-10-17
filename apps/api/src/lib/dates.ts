@@ -22,6 +22,9 @@ export const searchSchema = z
       .optional(),
     checkIn: dateSchema.optional(),
     checkOut: dateSchema.optional(),
+    /** QA-009: capacity filter — stays that cannot host this many guests are
+     * excluded server-side. */
+    guests: z.coerce.number().int().min(1).max(200).optional(),
   })
   .superRefine((q, c) => {
     if (!!q.checkIn !== !!q.checkOut)

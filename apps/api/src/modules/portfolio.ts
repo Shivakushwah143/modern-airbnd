@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { db } from "../db.js";
 import { AppError, found } from "../lib/errors.js";
 import { idSchema } from "./schemas.js";
@@ -31,9 +32,48 @@ export const testimonialSchema = z.object({
   quote: text(1000).default(""),
   mediaType: z.enum(["IMAGE", "VIDEO"]).default("IMAGE"),
   mediaUrl: mediaUrl.default(""),
+  consentConfirmed: z.boolean().default(false),
+  consentSource: text(120).default(""),
+  // QA-017: accessibility support for short videos.
+  captionsUrl: mediaUrl.default(""),
+  transcript: text(5000).default(""),
   sortOrder: order,
   isPublished: z.boolean().default(false),
 });
+
+/**
+ * QA-004: the server refuses to publish an IMAGE/VIDEO testimonial without
+ * attached media and explicit, sourced owner consent. Consent timestamps are
+ * server-managed and never accepted from the request body.
+ */
+export function testimonialPublishErrors(t: {
+  mediaUrl?: string;
+  consentConfirmed?: boolean;
+  consentSource?: string;
+  isPublished?: boolean;
+}): string[] {
+  if (!t.isPublished) return [];
+  const errors: string[] = [];
+  if (!(t.mediaUrl || "").trim())
+    errors.push("Attach the owner's screenshot or video before publishing.");
+  if (!t.consentConfirmed)
+    errors.push("Record the owner's explicit consent before publishing.");
+  else if (!(t.consentSource || "").trim())
+    errors.push("Record how the owner's consent was obtained.");
+  return errors;
+}
+
+function assertPublishableTestimonial(t: Parameters<typeof testimonialPublishErrors>[0], consentGivenNow: boolean) {
+  const errors = testimonialPublishErrors(t);
+  if (errors.length)
+    throw new AppError(
+      422,
+      "TESTIMONIAL_NOT_PUBLISHABLE",
+      "Complete the consent and media checks before publishing.",
+      errors,
+    );
+  return consentGivenNow ? { consentRecordedAt: new Date() } : {};
+}
 export const caseSchema = z.object({
   propertyId: z.string().uuid().nullish().default(null),
   title: text(160, 1),
@@ -58,6 +98,31 @@ export const signatureInput = z
     kind: z.enum(["image", "video"]),
   })
   .strict();
+
+/**
+ * QA-001 / QA-002: portfolio eligibility for a property.
+ *
+ * Deliberately does NOT require `guestEnabled`: an owner-portfolio listing may
+ * exist without being guest-bookable. Demo inventory and inactive locations
+ * are never eligible for public managed counts or lists.
+ */
+export const portfolioPropertyWhere = {
+  status: "PUBLISHED",
+  portfolioEnabled: true,
+  isDemo: false,
+  location: { isActive: true },
+} satisfies Prisma.PropertyWhereInput;
+
+/**
+ * QA-001: published case studies obey the same eligibility when they are
+ * linked to a property. Independent owner stories with no property link
+ * (`propertyId: null`) remain visible as published — they assert no property
+ * facts, so portfolio visibility cannot be derived from a property row.
+ */
+export const publishedCaseWhere = {
+  isPublished: true,
+  OR: [{ propertyId: null }, { property: portfolioPropertyWhere }],
+} satisfies Prisma.PortfolioCaseStudyWhereInput;
 
 export function slugify(input: string) {
   return (
@@ -111,21 +176,30 @@ portfolioAdmin.get("/portfolio/testimonials", async (_req, res) =>
     data: await db.mediaTestimonial.findMany({ orderBy: { sortOrder: "asc" } }),
   }),
 );
-portfolioAdmin.post("/portfolio/testimonials", async (req, res) =>
+portfolioAdmin.post("/portfolio/testimonials", async (req, res) => {
+  const b = testimonialSchema.parse(req.body);
+  const consent = assertPublishableTestimonial(b, b.consentConfirmed);
   res.status(201).json({
-    data: await db.mediaTestimonial.create({
-      data: testimonialSchema.parse(req.body),
-    }),
-  }),
-);
-portfolioAdmin.patch("/portfolio/testimonials/:id", async (req, res) =>
+    data: await db.mediaTestimonial.create({ data: { ...b, ...consent } }),
+  });
+});
+portfolioAdmin.patch("/portfolio/testimonials/:id", async (req, res) => {
+  const b = testimonialSchema.partial().parse(req.body);
+  const id = idSchema.parse(req.params.id);
+  const existing = found(await db.mediaTestimonial.findUnique({ where: { id } }));
+  const merged = { ...existing, ...b };
+  // Consent is only stamped when first recorded; unpublish/validation is
+  // evaluated against the merged state so partial updates cannot bypass QA-004.
+  const consentGivenNow =
+    b.consentConfirmed === true && existing.consentConfirmed === false;
+  const consent = assertPublishableTestimonial(merged, consentGivenNow);
   res.json({
     data: await db.mediaTestimonial.update({
-      where: { id: idSchema.parse(req.params.id) },
-      data: testimonialSchema.partial().parse(req.body),
+      where: { id },
+      data: { ...b, ...consent },
     }),
-  }),
-);
+  });
+});
 portfolioAdmin.delete("/portfolio/testimonials/:id", async (req, res) => {
   await db.mediaTestimonial.delete({
     where: { id: idSchema.parse(req.params.id) },
@@ -189,15 +263,10 @@ portfolioAdmin.patch("/portfolio/properties/:id", async (req, res) => {
 export const portfolioPublic = Router();
 
 portfolioPublic.get("/portfolio", async (_req, res) => {
-  const portfolioWhere = {
-    status: "PUBLISHED" as const,
-    guestEnabled: true,
-    portfolioEnabled: true,
-    location: { isActive: true },
-  };
+  const portfolioWhere = portfolioPropertyWhere;
   const [caseStudies, team, testimonials, cityGroups] = await Promise.all([
     db.portfolioCaseStudy.findMany({
-      where: { isPublished: true },
+      where: publishedCaseWhere,
       orderBy: [
         { sortOrder: "asc" },
         { createdAt: "desc" },
@@ -226,7 +295,7 @@ portfolioPublic.get("/portfolio", async (_req, res) => {
       },
     }),
     db.mediaTestimonial.findMany({
-      where: { isPublished: true },
+      where: { isPublished: true, mediaUrl: { not: "" } },
       orderBy: { sortOrder: "asc" },
       select: {
         id: true,
@@ -235,6 +304,8 @@ portfolioPublic.get("/portfolio", async (_req, res) => {
         quote: true,
         mediaType: true,
         mediaUrl: true,
+        captionsUrl: true,
+        transcript: true,
       },
     }),
     db.location.findMany({
@@ -268,6 +339,67 @@ portfolioPublic.get("/portfolio", async (_req, res) => {
   });
 });
 
+portfolioPublic.get("/portfolio/properties/:slug", async (req, res) => {
+  const slug = String(req.params.slug);
+  if (!/^[a-z0-9-]+$/.test(slug))
+    throw new AppError(404, "RESOURCE_NOT_FOUND", "Portfolio property not found.");
+  const property = await db.property.findFirst({
+    where: { slug, ...portfolioPropertyWhere },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      area: true,
+      propertyType: true,
+      shortDescription: true,
+      description: true,
+      bedrooms: true,
+      bathrooms: true,
+      beds: true,
+      maxGuests: true,
+      inventoryMode: true,
+      suitedFor: true,
+      localHighlights: true,
+      houseRules: true,
+      checkInInfo: true,
+      checkOutInfo: true,
+      // QA-010: owner-facing view — no pricing, availability inventory,
+      // WhatsApp booking link, owner identity or internal notes.
+      location: { select: { name: true, slug: true, state: true } },
+      amenities: { select: { id: true, name: true, slug: true } },
+      media: {
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        select: {
+          id: true,
+          secureUrl: true,
+          cloudinaryPublicId: true,
+          altText: true,
+          isCover: true,
+          sortOrder: true,
+          width: true,
+          height: true,
+        },
+      },
+    },
+  });
+  if (!property)
+    throw new AppError(404, "RESOURCE_NOT_FOUND", "Portfolio property not found.");
+  const caseStudy = await db.portfolioCaseStudy.findFirst({
+    where: { isPublished: true, propertyId: property.id },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      city: true,
+      summary: true,
+      outcome: true,
+      coverUrl: true,
+    },
+  });
+  res.json({ data: { property, caseStudy } });
+});
+
 portfolioPublic.get("/portfolio/cities/:slug", async (req, res) => {
   const slug = String(req.params.slug);
   const location = found(
@@ -281,9 +413,7 @@ portfolioPublic.get("/portfolio/cities/:slug", async (req, res) => {
   const properties = await db.property.findMany({
     where: {
       locationId: location.id,
-      status: "PUBLISHED",
-      guestEnabled: true,
-      portfolioEnabled: true,
+      ...portfolioPropertyWhere,
     },
     orderBy: { name: "asc" },
     take: 200,

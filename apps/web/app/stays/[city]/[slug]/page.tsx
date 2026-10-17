@@ -65,7 +65,18 @@ export default async function StayDetail({
 }) {
   const { city, slug } = await params;
   const raw = await searchParams;
-  const q = { checkIn: raw.checkIn, checkOut: raw.checkOut };
+  const guestsRaw = Number(raw.guests);
+  const q = {
+    checkIn: raw.checkIn,
+    checkOut: raw.checkOut,
+    guests:
+      raw.guests &&
+      Number.isInteger(guestsRaw) &&
+      guestsRaw >= 1 &&
+      guestsRaw <= 200
+        ? raw.guests
+        : undefined,
+  };
 
   const first = await loadProperty(slug, queryString(q));
   let p = first.property;

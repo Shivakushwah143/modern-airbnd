@@ -19,7 +19,7 @@ export function PropertyBody({
 }: {
   property: Property;
   settings: Settings;
-  dates?: { checkIn?: string; checkOut?: string };
+  dates?: { checkIn?: string; checkOut?: string; guests?: string };
   warning?: string;
   preview?: boolean;
 }) {
@@ -44,7 +44,7 @@ export function PropertyBody({
             <Search
               locations={[]}
               initial={dates}
-              action={`/properties/${p.slug}`}
+              action={`/stays/${p.location.slug}/${p.slug}`}
               compact
             />
           )}

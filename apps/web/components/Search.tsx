@@ -9,11 +9,16 @@ import { Icon } from "./Icon";
 export function Search({
   locations,
   initial = {},
-  action = "/properties",
+  action = "/stays",
   compact = false,
 }: {
   locations: Location[];
-  initial?: { location?: string; checkIn?: string; checkOut?: string };
+  initial?: {
+    location?: string;
+    checkIn?: string;
+    checkOut?: string;
+    guests?: string;
+  };
   action?: string;
   compact?: boolean;
 }) {
@@ -21,7 +26,10 @@ export function Search({
   const [location, setLocation] = useState(initial.location || "");
   const [start, setStart] = useState(initial.checkIn || "");
   const [end, setEnd] = useState(initial.checkOut || "");
-  const [guests, setGuests] = useState(2);
+  const [guests, setGuests] = useState(() => {
+    const n = Number(initial.guests);
+    return Number.isInteger(n) && n >= 1 && n <= 12 ? n : 2;
+  });
   const [modal, setModal] = useState<"dates" | "location" | null>(null);
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
@@ -57,13 +65,23 @@ export function Search({
       return;
     }
     const q = new URLSearchParams();
-    if (location) q.set("location", location);
     if (start) {
       q.set("checkIn", start);
       q.set("checkOut", end);
     }
+    if (guests > 1) q.set("guests", String(guests));
+    const suffix = q.toString();
     startTransition(() => {
-      router.push(`${action}?${q}`);
+      // QA-007: guest search always lands on the canonical /stays journey —
+      // city list, or the selected city's listing — never the legacy
+      // /properties route. Dates and guest count travel with the URL.
+      const target =
+        action === "/stays"
+          ? location
+            ? `/stays/${location}${suffix ? `?${suffix}` : ""}`
+            : `/stays${suffix ? `?${suffix}` : ""}`
+          : `${action}${suffix ? `?${suffix}` : ""}`;
+      router.push(target);
       router.refresh();
     });
   }
@@ -89,7 +107,9 @@ export function Search({
               <small>Where are you going?</small>
               <strong>
                 {selectedLocation?.name ||
-                  (locations.length ? "Choose city" : "City list unavailable")}
+                  (locations.length
+                    ? "Choose city"
+                    : "No cities published yet")}
               </strong>
             </span>
             <span className="chevron">v</span>

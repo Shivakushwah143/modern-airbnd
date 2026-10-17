@@ -6,7 +6,7 @@ import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
 import {
   NAV_LINKS,
-  headerCta,
+  headerCtas,
   isNavActive,
   navMode,
 } from "@/lib/nav";
@@ -16,7 +16,7 @@ export function Header() {
   const pathname = usePathname();
   const mode = navMode(pathname);
   const links = NAV_LINKS[mode];
-  const cta = headerCta(mode);
+  const ctas = headerCtas(mode);
   const publicHeader = mode !== "admin";
 
   return (
@@ -46,14 +46,22 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <Link className="button secondary header-contact" href={cta.href}>
-          <Icon name={cta.icon} size={18} />
-          {cta.label}
-        </Link>
+        <div className="header-ctas">
+          {ctas.map((cta, index) => (
+            <Link
+              key={cta.href}
+              className={`button ${index === 0 ? "primary" : "secondary"} header-contact`}
+              href={cta.href}
+            >
+              <Icon name={cta.icon} size={18} />
+              {cta.label}
+            </Link>
+          ))}
+        </div>
         {publicHeader && (
-          <Link className="header-quick-contact" href={cta.href}>
-            <Icon name={cta.icon} size={17} />
-            <span>{cta.label}</span>
+          <Link className="header-quick-contact" href={ctas[0].href}>
+            <Icon name={ctas[0].icon} size={17} />
+            <span>{ctas[0].label}</span>
           </Link>
         )}
         <button
@@ -75,7 +83,7 @@ export function Header() {
               : "Explore Modern Stayz"
         }
       >
-        <nav className="mobile-links">
+        <nav className="mobile-links" aria-label="Main navigation">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -90,6 +98,21 @@ export function Header() {
             </Link>
           ))}
         </nav>
+        {publicHeader && (
+          <div className="mobile-cta-row">
+            {ctas.map((cta, index) => (
+              <Link
+                key={cta.href}
+                className={`button ${index === 0 ? "primary" : "secondary"}`}
+                href={cta.href}
+                onClick={() => setOpen(false)}
+              >
+                <Icon name={cta.icon} size={18} />
+                {cta.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </Dialog>
     </header>
   );

@@ -50,13 +50,20 @@ export function TestimonialCard({ item }: { item: Testimonial }) {
       {item.mediaUrl && (
         <div className="testimonial-media">
           {item.mediaType === "VIDEO" ? (
-            <video
-              src={item.mediaUrl}
-              controls
-              playsInline
-              preload="metadata"
-              aria-label={label}
-            />
+            /* QA-017: explicit play only — no autoplay — with captions when the
+             * owner supplied them. */
+            <video controls playsInline preload="metadata" aria-label={label}>
+              <source src={item.mediaUrl} />
+              {item.captionsUrl ? (
+                <track
+                  kind="captions"
+                  src={item.captionsUrl}
+                  srcLang="en"
+                  label="Captions"
+                  default
+                />
+              ) : null}
+            </video>
           ) : (
             <img
               src={item.mediaUrl}
@@ -77,6 +84,12 @@ export function TestimonialCard({ item }: { item: Testimonial }) {
           {item.city && <> · {item.city}</>}
         </cite>
       </figcaption>
+      {item.mediaType === "VIDEO" && item.transcript && (
+        <details className="media-transcript">
+          <summary>Video transcript</summary>
+          <p>{item.transcript}</p>
+        </details>
+      )}
       <p className="small muted">
         Owner-uploaded {item.mediaType === "VIDEO" ? "video" : "screenshot"}
       </p>
@@ -85,9 +98,12 @@ export function TestimonialCard({ item }: { item: Testimonial }) {
 }
 
 export function CaseStudyCard({ item }: { item: PortfolioCaseStudy }) {
+  // QA-010: case studies lead to the owner-facing case-study detail — never to
+  // a guest booking route.
+  const href = `/portfolio/cases/${item.slug}`;
   return (
     <article className="portfolio-card">
-      <div className="portfolio-cover">
+      <Link className="portfolio-cover" href={href} aria-label={`Read case study: ${item.title}`}>
         {item.coverUrl ? (
           <img
             src={item.coverUrl}
@@ -99,32 +115,34 @@ export function CaseStudyCard({ item }: { item: PortfolioCaseStudy }) {
         ) : (
           <Icon name="photo" size={28} />
         )}
-      </div>
+      </Link>
       <div className="portfolio-statline">
         <span className="pill">{item.city || "Portfolio"}</span>
       </div>
-      <h3>{item.title}</h3>
+      <h3>
+        <Link href={href}>{item.title}</Link>
+      </h3>
       {item.summary && <p className="muted small">{item.summary}</p>}
       {item.outcome && <p className="case-outcome small">{item.outcome}</p>}
-      {item.property && (
-        <Link className="text-link" href={`/properties/${item.property.slug}`}>
-          View {item.property.name}
-        </Link>
-      )}
+      <Link className="text-link" href={href}>
+        Read the case study
+      </Link>
     </article>
   );
 }
 
 export function ManagedPropertyCard({
   property: p,
-  citySlug,
   cityName,
 }: {
   property: ManagedProperty;
-  citySlug: string;
+  /** Kept for caller compatibility; the owner route is keyed by property slug. */
+  citySlug?: string;
   cityName: string;
 }) {
-  const href = `/stays/${citySlug}/${p.slug}`;
+  // QA-010: portfolio listings open the owner-facing property view — the guest
+  // booking journey is separate and never implied here.
+  const href = `/portfolio/properties/${p.slug}`;
   return (
     <article className="property-card">
       <Link className="card-image" href={href} tabIndex={-1} aria-hidden="true">
@@ -144,11 +162,11 @@ export function ManagedPropertyCard({
         </p>
         <p className="facts">
           <Icon name="bed" size={18} />
-          {p.bedrooms} bedrooms · {p.bathrooms} baths · {p.maxGuests} guests
+          {p.bedrooms} bedrooms · {p.bathrooms} baths · sleeps up to {p.maxGuests}
         </p>
         <div className="card-foot">
           <Link className="card-link" href={href}>
-            View managed stay
+            View property case
           </Link>
         </div>
       </div>

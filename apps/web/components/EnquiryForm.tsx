@@ -17,16 +17,20 @@ export function EnquiryForm({
   propertyId: string;
   maxGuests?: number;
   isDemo?: boolean;
-  initial?: { checkIn?: string; checkOut?: string };
+  initial?: { checkIn?: string; checkOut?: string; guests?: string };
 }) {
   const router = useRouter();
   const [checkIn, setCheckIn] = useState(initial.checkIn || "");
   const [checkOut, setCheckOut] = useState(initial.checkOut || "");
-  const [adults, setAdults] = useState(1);
+  const [adults, setAdults] = useState(() => {
+    const n = Number(initial.guests);
+    return Number.isInteger(n) && n >= 1 ? Math.min(n, maxGuests) : 1;
+  });
   const [children, setChildren] = useState(0);
   const [guestName, setGuestName] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -47,6 +51,8 @@ export function EnquiryForm({
     if (guestName.trim().length < 2) return "Enter your name.";
     if (!/^\+?[0-9\s-]{7,18}$/.test(phone.trim()))
       return "Enter a valid phone number, e.g. +91 followed by the number.";
+    if (!consent)
+      return "Please agree to be contacted so the team can reply to your enquiry.";
     return "";
   }
 
@@ -68,6 +74,7 @@ export function EnquiryForm({
           guestName: guestName.trim(),
           phone: phone.trim(),
           message: message.trim(),
+          consentAccepted: consent,
         }),
       });
       router.push(`/enquiry/${result.enquiry.id}`);
@@ -156,6 +163,19 @@ export function EnquiryForm({
           maxLength={1000}
           onChange={(e) => setMessage(e.target.value)}
         />
+      </label>
+      <label className="checkbox">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          required
+        />
+        {/* QA-019: placeholder for the business-approved copy; links to the
+            site's own Privacy Notice instead of inventing legal terms. */}
+        I agree that the Modern Stayz team may contact me about this enquiry
+        and process my details as described in the{" "}
+        <a href="/privacy">Privacy Notice</a>.
       </label>
       {error && (
         <p className="field-error" role="alert">

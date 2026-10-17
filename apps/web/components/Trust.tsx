@@ -54,12 +54,14 @@ export function PropertyPassport({
 }
 
 export function StayTruths({ property: p }: { property: Property }) {
+  // QA-003: `propertyNotes` is an internal operations note and is no longer
+  // part of the public payload; only guest-facing facts are rendered.
   const facts = [
     ...p.houseRules,
     p.checkInInfo && `Check-in: ${p.checkInInfo}`,
     p.checkOutInfo && `Check-out: ${p.checkOutInfo}`,
   ].filter(Boolean);
-  if (!facts.length && !p.propertyNotes) return null;
+  if (!facts.length) return null;
   return (
     <section className="detail-section stay-truths">
       <p className="eyebrow">STAY TRUTHS</p>
@@ -69,7 +71,6 @@ export function StayTruths({ property: p }: { property: Property }) {
           <li key={i}>{f}</li>
         ))}
       </ul>
-      {p.propertyNotes && <p className="prose">{p.propertyNotes}</p>}
     </section>
   );
 }

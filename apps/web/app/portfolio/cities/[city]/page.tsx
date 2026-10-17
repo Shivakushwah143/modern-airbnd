@@ -87,8 +87,8 @@ export default async function PortfolioCityPage({
         {location.state && <p className="intro">{location.state}</p>}
         <p className="muted small">
           {properties.length} published{" "}
-          {properties.length === 1 ? "property" : "properties"} — every listing
-          links to live availability and booking enquiry.
+          {properties.length === 1 ? "property" : "properties"} — each opens
+          its owner-facing property case with gallery and management scope.
         </p>
       </div>
 

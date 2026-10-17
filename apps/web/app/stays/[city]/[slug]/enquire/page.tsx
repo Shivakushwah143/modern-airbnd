@@ -39,7 +39,17 @@ export default async function EnquirePage({
     /* settings optional for the form */
   }
 
-  const stayDates = { checkIn: raw.checkIn, checkOut: raw.checkOut };
+  const guestsRaw = Number(raw.guests);
+  const stayDates = {
+    checkIn: raw.checkIn,
+    checkOut: raw.checkOut,
+    guests:
+      raw.guests &&
+      Number.isInteger(guestsRaw) &&
+      guestsRaw >= 1
+        ? raw.guests
+        : undefined,
+  };
 
   return (
     <div className="container section">

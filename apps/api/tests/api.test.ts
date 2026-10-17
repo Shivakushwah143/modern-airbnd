@@ -23,7 +23,8 @@ let locationId: string,
   unitId: string,
   secondUnitId: string,
   mediaId: string,
-  blockId: string;
+  blockId: string,
+  demoPropertyId: string;
 const body = {
   name: "Integration apartment",
   slug: "integration-apartment",
@@ -538,6 +539,270 @@ describe("API with real PostgreSQL; Cloudinary adapter stubbed", () => {
         isVisible: true,
       });
     expect(r.status).toBe(400);
+  });
+  it("QA-002: new properties opt out of the owner portfolio by default", async () => {
+    const p = await db.property.findUnique({ where: { id: propertyId } });
+    expect(p?.portfolioEnabled).toBe(false);
+    const r = await agent
+      .patch(`/api/v1/admin/portfolio/properties/${propertyId}`)
+      .set("Origin", origin)
+      .send({ portfolioEnabled: true });
+    expect(r.status).toBe(200);
+  });
+  it("QA-005: hidden and demo properties refuse public enquiries; no rows created", async () => {
+    const enquiryBody = {
+      propertyId,
+      checkIn: "2099-03-01",
+      checkOut: "2099-03-03",
+      adults: 1,
+      children: 0,
+      guestName: "QA Guest",
+      phone: "+919777777771",
+      consentAccepted: true,
+    };
+    const ok = await request(app).post("/api/v1/enquiries").send(enquiryBody);
+    expect(ok.status).toBe(201);
+    expect(ok.body.data.enquiry.consentAccepted).toBe(true);
+    expect(ok.body.data.enquiry.consentRecordedAt).toBeTruthy();
+    // QA-018: the acknowledgement reference verifies without exposing PII.
+    const receiptId = ok.body.data.enquiry.id as string;
+    const receipt = await request(app).get(`/api/v1/enquiries/${receiptId}/receipt`);
+    expect(receipt.status).toBe(200);
+    expect(receipt.body.data).toEqual({ reference: receiptId });
+    expect(JSON.stringify(receipt.body)).not.toContain("QA Guest");
+    const missing = await request(app).get(
+      "/api/v1/enquiries/00000000-0000-4000-8000-000000000099/receipt",
+    );
+    expect(missing.status).toBe(404);
+    // QA-019: consent is validated server-side.
+    const noConsent = await request(app)
+      .post("/api/v1/enquiries")
+      .send({ ...enquiryBody, consentAccepted: false });
+    expect(noConsent.status).toBe(400);
+    const before = await db.enquiry.count();
+    // Guest-hidden property: bypass attempt via direct POST must 404 and write nothing.
+    await agent
+      .patch(`/api/v1/admin/portfolio/properties/${propertyId}`)
+      .set("Origin", origin)
+      .send({ guestEnabled: false });
+    const hidden = await request(app)
+      .post("/api/v1/enquiries")
+      .send(enquiryBody);
+    expect(hidden.status).toBe(404);
+    expect(hidden.body.error.code).toBe("RESOURCE_NOT_FOUND");
+    expect(await db.enquiry.count()).toBe(before);
+    await agent
+      .patch(`/api/v1/admin/portfolio/properties/${propertyId}`)
+      .set("Origin", origin)
+      .send({ guestEnabled: true });
+    // Demo inventory: rejected with an explicit reason, and writes nothing.
+    const demo = await db.property.create({
+      data: {
+        name: "QA demo stay",
+        slug: "qa005-demo-stay",
+        locationId,
+        status: "PUBLISHED",
+        isDemo: true,
+        units: { create: { name: "Entire Property", isEntireProperty: true } },
+      },
+    });
+    demoPropertyId = demo.id;
+    const demoRes = await request(app)
+      .post("/api/v1/enquiries")
+      .send({ ...enquiryBody, propertyId: demo.id });
+    expect(demoRes.status).toBe(409);
+    expect(demoRes.body.error.code).toBe("DEMO_READ_ONLY");
+    expect(await db.enquiry.count()).toBe(before);
+  });
+  it("QA-019: owner leads record consent with a server timestamp", async () => {
+    const denied = await request(app)
+      .post("/api/v1/owner-leads")
+      .send({ name: "QA Lead", phone: "+919777777772", consentAccepted: false });
+    expect(denied.status).toBe(400);
+    const beforeLeads = await db.ownerLead.count({
+      where: { phone: "+919777777772" },
+    });
+    const accepted = await request(app)
+      .post("/api/v1/owner-leads")
+      .send({ name: "QA Lead", phone: "+919777777772", consentAccepted: true });
+    expect(accepted.status).toBe(201);
+    expect(accepted.body.data.consentAccepted).toBe(true);
+    expect(accepted.body.data.consentRecordedAt).toBeTruthy();
+    // OwnerLead rows are not truncated between runs — assert the delta instead.
+    expect(
+      await db.ownerLead.count({ where: { phone: "+919777777772" } }),
+    ).toBe(beforeLeads + 1);
+  });
+  it("QA-009: guest-count search filters capacity server-side", async () => {
+    // The integration property sleeps 2; a party of 12 must be excluded.
+    const large = await request(app).get("/api/v1/properties?guests=12");
+    expect(large.status).toBe(200);
+    expect(large.body.data).toHaveLength(0);
+    const pair = await request(app).get("/api/v1/properties?guests=2");
+    expect(
+      pair.body.data.map((p: { slug: string }) => p.slug),
+    ).toContain("integration-apartment");
+    const bad = await request(app).get("/api/v1/properties?guests=0");
+    expect(bad.status).toBe(400);
+  });
+  it("QA-001: portfolio keeps guest-hidden listings and excludes demo from managed counts", async () => {
+    await agent
+      .patch(`/api/v1/admin/portfolio/properties/${propertyId}`)
+      .set("Origin", origin)
+      .send({ guestEnabled: false });
+    const guestList = await request(app).get("/api/v1/properties");
+    expect(
+      guestList.body.data.map((p: { slug: string }) => p.slug),
+    ).not.toContain("integration-apartment");
+    const portfolio = await request(app).get("/api/v1/portfolio");
+    expect(portfolio.status).toBe(200);
+    const city = portfolio.body.data.cities.find(
+      (c: { slug: string }) => c.slug === "test-city",
+    );
+    // The demo property at the same city is excluded from managed counts.
+    expect(city?.count).toBe(1);
+    expect(portfolio.body.data.managedCount).toBe(1);
+    // Linked case studies obey portfolio eligibility; independent stories stay.
+    const linked = await agent
+      .post("/api/v1/admin/portfolio/cases")
+      .set("Origin", origin)
+      .send({ title: "Demo linked case", propertyId: demoPropertyId, isPublished: true });
+    expect(linked.status).toBe(201);
+    const independent = await agent
+      .post("/api/v1/admin/portfolio/cases")
+      .set("Origin", origin)
+      .send({ title: "Independent owner story", isPublished: true });
+    expect(independent.status).toBe(201);
+    const after = await request(app).get("/api/v1/portfolio");
+    expect(
+      after.body.data.caseStudies.map((c: { title: string }) => c.title),
+    ).toEqual(["Independent owner story"]);
+    await agent
+      .patch(`/api/v1/admin/portfolio/properties/${propertyId}`)
+      .set("Origin", origin)
+      .send({ guestEnabled: true });
+  });
+  it("QA-010/011: owner-facing portfolio property endpoint exposes no booking internals", async () => {
+    const r = await request(app).get(
+      "/api/v1/portfolio/properties/integration-apartment",
+    );
+    expect(r.status).toBe(200);
+    const raw = JSON.stringify(r.body);
+    // QA-010: no booking prices, availability, WhatsApp internals, owner data
+    // or internal notes on the owner-facing view.
+    expect(raw).not.toMatch(/"whatsappUrl"/);
+    expect(raw).not.toMatch(/"availability"/);
+    expect(raw).not.toMatch(/"owner"/);
+    expect(raw).not.toMatch(/"propertyNotes"/);
+    expect(raw).not.toMatch(/"whatsappNumber"/);
+    expect(raw).not.toContain("QA003_PRIVATE_MARKER_NOTE");
+    expect(r.body.data.property.name).toBe("Integration apartment");
+    expect(r.body.data.property.location.slug).toBe("test-city");
+    // Demo inventory and unknown slugs are not portfolio-eligible.
+    expect(
+      (await request(app).get("/api/v1/portfolio/properties/qa005-demo-stay"))
+        .status,
+    ).toBe(404);
+    expect(
+      (await request(app).get("/api/v1/portfolio/properties/no-such-place"))
+        .status,
+    ).toBe(404);
+  });
+  it("QA-003: public property detail hides internal notes and owner records", async () => {
+    const owner = await db.owner.create({
+      data: {
+        name: "QA Owner",
+        phone: "+919888000001",
+        notes: "OWNER_INTERNAL_NOTES_QA003",
+      },
+    });
+    await agent
+      .patch(`/api/v1/admin/properties/${propertyId}`)
+      .set("Origin", origin)
+      .send({ ...body, propertyNotes: "QA003_PRIVATE_MARKER_NOTE" });
+    await agent
+      .patch(`/api/v1/admin/properties/${propertyId}/owner`)
+      .set("Origin", origin)
+      .send({ ownerId: owner.id });
+    const r = await request(app).get(
+      "/api/v1/properties/integration-apartment",
+    );
+    expect(r.status).toBe(200);
+    const raw = JSON.stringify(r.body);
+    expect(raw).not.toContain("QA003_PRIVATE_MARKER_NOTE");
+    expect(raw).not.toContain("OWNER_INTERNAL_NOTES_QA003");
+    expect(raw).not.toMatch(/"propertyNotes"/);
+    expect(raw).not.toMatch(/"ownerId"/);
+    expect(raw).not.toMatch(/"owner":/);
+    expect(r.body.data.name).toBe("Integration apartment");
+  });
+  it("QA-004: testimonial publishing requires media and recorded consent", async () => {
+    const post = (payload: unknown) =>
+      agent
+        .post("/api/v1/admin/portfolio/testimonials")
+        .set("Origin", origin)
+        .send(payload as object);
+    const noMedia = await post({
+      ownerName: "QA Owner Two",
+      isPublished: true,
+      consentConfirmed: true,
+      consentSource: "WhatsApp",
+    });
+    expect(noMedia.status).toBe(422);
+    expect(noMedia.body.error.code).toBe("TESTIMONIAL_NOT_PUBLISHABLE");
+    const noConsent = await post({
+      ownerName: "QA Owner Two",
+      isPublished: true,
+      mediaUrl: "https://cdn.example.com/qa004.png",
+    });
+    expect(noConsent.status).toBe(422);
+    const draft = await post({ ownerName: "QA Owner Two" });
+    expect(draft.status).toBe(201);
+    expect(draft.body.data.isPublished).toBe(false);
+    const id = draft.body.data.id as string;
+    const publishNoConsent = await agent
+      .patch(`/api/v1/admin/portfolio/testimonials/${id}`)
+      .set("Origin", origin)
+      .send({ isPublished: true, mediaUrl: "https://cdn.example.com/qa004.png" });
+    expect(publishNoConsent.status).toBe(422);
+    const publish = await agent
+      .patch(`/api/v1/admin/portfolio/testimonials/${id}`)
+      .set("Origin", origin)
+      .send({
+        isPublished: true,
+        mediaUrl: "https://cdn.example.com/qa004.png",
+        consentConfirmed: true,
+        consentSource: "WhatsApp approval from the owner",
+      });
+    expect(publish.status).toBe(200);
+    expect(publish.body.data.consentRecordedAt).toBeTruthy();
+    // Revoking consent on a published testimonial must also be refused.
+    const revoke = await agent
+      .patch(`/api/v1/admin/portfolio/testimonials/${id}`)
+      .set("Origin", origin)
+      .send({ consentConfirmed: false });
+    expect(revoke.status).toBe(422);
+    const list = await request(app).get("/api/v1/portfolio");
+    expect(
+      list.body.data.testimonials.map((t: { id: string }) => t.id),
+    ).toContain(id);
+    // A direct database write that bypasses validation must still be filtered
+    // by the public query (published without media).
+    await db.mediaTestimonial.create({
+      data: {
+        ownerName: "QA Bypass",
+        mediaUrl: "",
+        isPublished: true,
+        consentConfirmed: true,
+        consentSource: "db write",
+      },
+    });
+    const after = await request(app).get("/api/v1/portfolio");
+    expect(
+      after.body.data.testimonials.every(
+        (t: { ownerName: string }) => t.ownerName !== "QA Bypass",
+      ),
+    ).toBe(true);
   });
   it("unpublish and archive hide direct pages", async () => {
     await agent

@@ -122,6 +122,8 @@ export async function publicProperties(query: unknown, slug?: string) {
     status: "PUBLISHED",
     guestEnabled: true,
     location: { isActive: true, ...(q.location ? { slug: q.location } : {}) },
+    // QA-009: capacity filtering happens server-side, not just in the UI.
+    ...(q.guests ? { maxGuests: { gte: q.guests } } : {}),
     ...(slug ? { slug } : {}),
   };
   const rows = await db.property.findMany({
@@ -167,7 +169,7 @@ export async function publicProperties(query: unknown, slug?: string) {
     .map((p) => {
       const state = availability(eligibleUnits(p), blocked, !!q.checkIn);
       if (p.inventoryReviewRequired) state.status = "UNAVAILABLE";
-      const { units: _units, whatsappNumber, ...safe } = p;
+      const whatsappNumber: string = p.whatsappNumber;
       const wa = p.isDemo
         ? null
         : whatsapp({
@@ -180,7 +182,7 @@ export async function publicProperties(query: unknown, slug?: string) {
             checkOut: q.checkOut,
             unavailable: state.status === "UNAVAILABLE",
           });
-      if (slug) return { ...safe, availability: state, whatsappUrl: wa };
+      if (slug) return publicPropertyDetail(p, state, wa);
       return {
         id: p.id,
         name: p.name,
@@ -205,4 +207,73 @@ export async function publicProperties(query: unknown, slug?: string) {
         Number(a.availability.status === "AVAILABLE"),
     );
 }
+/**
+ * QA-003: explicit public DTO for the guest property-detail payload.
+ *
+ * The previous object-spread returned every loaded column. This allowlist
+ * guarantees that internal notes (`propertyNotes`), the owner record and IDs,
+ * the raw WhatsApp number, unit inventory and any other operational columns
+ * never reach public JSON — including nested relations. External listings are
+ * re-filtered so only verified, visible claims are exposed.
+ */
+export type PublicPropertyRow = Omit<
+  FullProperty,
+  "owner" | "units" | "externalListings"
+> & {
+  /** Unit inventory is read for availability only and never serialized. */
+  units: unknown;
+  externalListings: { isVisible: boolean; verifiedAt: Date | null }[];
+};
+
+export function publicPropertyDetail(
+  p: PublicPropertyRow,
+  availabilityState: { status: string; availableUnits?: number },
+  whatsappUrl: string | null,
+) {
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    locationId: p.locationId,
+    location: {
+      id: p.location.id,
+      name: p.location.name,
+      slug: p.location.slug,
+      state: p.location.state,
+      isActive: p.location.isActive,
+    },
+    shortDescription: p.shortDescription,
+    description: p.description,
+    propertyType: p.propertyType,
+    inventoryMode: p.inventoryMode,
+    inventoryReviewRequired: p.inventoryReviewRequired,
+    localHighlights: p.localHighlights,
+    suitedFor: p.suitedFor,
+    area: p.area,
+    addressLine: p.addressLine,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    bedrooms: p.bedrooms,
+    bathrooms: p.bathrooms,
+    beds: p.beds,
+    maxGuests: p.maxGuests,
+    houseRules: p.houseRules,
+    checkInInfo: p.checkInInfo,
+    checkOutInfo: p.checkOutInfo,
+    seoTitle: p.seoTitle,
+    seoDescription: p.seoDescription,
+    status: p.status,
+    isDemo: p.isDemo,
+    guestEnabled: p.guestEnabled,
+    portfolioEnabled: p.portfolioEnabled,
+    amenities: p.amenities,
+    media: p.media,
+    externalListings: p.externalListings.filter(
+      (e) => e.isVisible && e.verifiedAt !== null,
+    ),
+    availability: availabilityState,
+    whatsappUrl,
+  };
+}
+
 export type SearchInput = z.infer<typeof searchSchema>;

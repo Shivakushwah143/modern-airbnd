@@ -11,6 +11,7 @@ export function OwnerLeadForm() {
     propertyType: "",
     message: "",
   });
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -18,11 +19,17 @@ export function OwnerLeadForm() {
     e.preventDefault();
     setStatus("");
     setError("");
+    if (!consent) {
+      setError(
+        "Please agree to be contacted so the team can reply about your property.",
+      );
+      return;
+    }
     setBusy(true);
     try {
       await api("/owner-leads", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, consentAccepted: consent }),
       });
       setForm({
         name: "",
@@ -32,6 +39,7 @@ export function OwnerLeadForm() {
         propertyType: "",
         message: "",
       });
+      setConsent(false);
       setStatus("Lead saved. Team will contact you.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save lead.");
@@ -69,6 +77,19 @@ export function OwnerLeadForm() {
           value={form.message}
           onChange={(e) => setForm({ ...form, message: e.target.value })}
         />
+      </label>
+      <label className="checkbox">
+        <input
+          type="checkbox"
+          required
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+        />
+        {/* QA-019: placeholder for business-approved copy; links to the site's
+            own Privacy Notice instead of inventing legal terms. */}
+        I agree that the Modern Stayz team may contact me about this property
+        enquiry and process my details as described in the{" "}
+        <a href="/privacy">Privacy Notice</a>.
       </label>
       {error && <p className="field-error">{error}</p>}
       {status && <p className="notice success">{status}</p>}

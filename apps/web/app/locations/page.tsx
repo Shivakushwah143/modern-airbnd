@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { Photo } from "@/components/Photo";
-import { Icon } from "@/components/Icon";
+import { CityIcon } from "@/components/CityIcon";
 import type { Location, Property } from "@modern-airbnd/contracts";
 
 export const metadata = { title: "Destinations" };
@@ -59,15 +58,15 @@ export default async function Locations() {
           const cityProperties = properties.filter(
             (property) => property.location.id === location.id,
           );
-          const cover = cityProperties.find((property) => property.media.length);
           return (
             <Link
               key={location.id}
-              href={`/properties?location=${location.slug}`}
+              href={`/stays/${location.slug}`}
               className="destination-tile"
             >
-              <span className="destination-tile-photo">
-                {cover ? <Photo media={cover.media[0]} /> : <Icon name="pin" />}
+              {/* QA-008: the approved city illustration, never a property cover. */}
+              <span className="destination-tile-photo" aria-hidden="true">
+                <CityIcon slug={location.slug} size={30} />
               </span>
               <div>
                 <h2>{location.name}</h2>

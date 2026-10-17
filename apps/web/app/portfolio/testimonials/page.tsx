@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { api } from "@/lib/api";
 import type { Testimonial } from "@modern-airbnd/contracts";
-import { TestimonialCard } from "@/components/PortfolioCards";
+import { TestimonialGallery } from "@/components/TestimonialGallery";
 
 export const metadata: Metadata = {
   title: "Owner testimonials",
@@ -47,11 +47,7 @@ export default async function TestimonialsPage() {
       )}
 
       {testimonials && testimonials.length > 0 && (
-        <div className="testimonial-grid">
-          {testimonials.map((item) => (
-            <TestimonialCard key={item.id} item={item} />
-          ))}
-        </div>
+        <TestimonialGallery items={testimonials} />
       )}
 
       {testimonials && testimonials.length === 0 && (

@@ -52,7 +52,20 @@ export default async function CityStays({
 }) {
   const { city } = await params;
   const raw = await searchParams;
-  const q = { checkIn: raw.checkIn, checkOut: raw.checkOut };
+  // QA-009: validate the guest count before it reaches the server filter.
+  const guestsRaw = Number(raw.guests);
+  const guests =
+    raw.guests &&
+    Number.isInteger(guestsRaw) &&
+    guestsRaw >= 1 &&
+    guestsRaw <= 200
+      ? raw.guests
+      : undefined;
+  const q = {
+    checkIn: raw.checkIn,
+    checkOut: raw.checkOut,
+    guests,
+  };
   const query = queryString({ location: city, ...q });
 
   const { location, catalogue, loadError } = await loadCity(city);
@@ -72,7 +85,12 @@ export default async function CityStays({
         ? e.message
         : "The property service is unavailable right now.";
   }
-  properties = properties.filter((p) => p.location.id === location.id);
+  properties = properties.filter(
+    (p) =>
+      p.location.id === location.id &&
+      // QA-009: capacity applies to the catalogue fallback too (no server query).
+      (!guests || p.maxGuests >= Number(guests)),
+  );
 
   const allUnavailable =
     properties.length > 0 &&
@@ -97,13 +115,13 @@ export default async function CityStays({
         key={query}
         locations={[location]}
         initial={{ location: location.slug, ...q }}
-        compact
       />
 
       <p className="eyebrow" style={{ marginTop: 26 }}>
         <CityIcon slug={location.slug} size={16} />{" "}
         {properties.length} {properties.length === 1 ? "stay" : "stays"} listed
         {q.checkIn && q.checkOut ? ` / ${q.checkIn} to ${q.checkOut}` : ""}
+        {guests ? ` / ${guests} ${Number(guests) === 1 ? "guest" : "guests"}` : ""}
       </p>
 
       {error && (

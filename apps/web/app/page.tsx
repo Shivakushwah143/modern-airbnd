@@ -1,14 +1,27 @@
 import Link from "next/link";
 import { api, emptySettings } from "@/lib/api";
-import type { Property, Location, Settings } from "@modern-airbnd/contracts";
+import type {
+  Property,
+  Location,
+  Settings,
+  PortfolioBundle,
+} from "@modern-airbnd/contracts";
 import { Search } from "@/components/Search";
 import { Photo } from "@/components/Photo";
 import { Icon } from "@/components/Icon";
 import { Operator } from "@/components/Trust";
 import { RetryButton } from "@/components/RetryButton";
+import {
+  CaseStudyCard,
+  TeamCard,
+  TestimonialCard,
+} from "@/components/PortfolioCards";
+import { CityIcon } from "@/components/CityIcon";
 
 function propertyHref(property: Property) {
-  return `/properties/${property.slug}`;
+  // QA-007/QA-012: guest-facing links use the canonical /stays journey, never
+  // the legacy /properties route.
+  return `/stays/${property.location.slug}/${property.slug}`;
 }
 
 function stayMeta(property: Property) {
@@ -20,11 +33,13 @@ function stayMeta(property: Property) {
 }
 
 export default async function Home() {
-  const [propertyResult, locationResult, settingsResult] = await Promise.allSettled([
-    api<Property[]>("/properties"),
-    api<Location[]>("/locations"),
-    api<Settings>("/settings/public"),
-  ]);
+  const [propertyResult, locationResult, settingsResult, portfolioResult] =
+    await Promise.allSettled([
+      api<Property[]>("/properties"),
+      api<Location[]>("/locations"),
+      api<Settings>("/settings/public"),
+      api<PortfolioBundle>("/portfolio"),
+    ]);
   const properties =
     propertyResult.status === "fulfilled" ? propertyResult.value : [];
   const apiLocations =
@@ -49,6 +64,14 @@ export default async function Home() {
   const showcase = properties.filter((property) => property.media.length).slice(0, 5);
   const fallbackShowcase = properties.slice(0, 5);
   const featured = showcase.length ? showcase : fallbackShowcase;
+  // QA-013: portfolio-led home. Every figure below comes from the real
+  // portfolio API — nothing here is invented.
+  const portfolio =
+    portfolioResult.status === "fulfilled" ? portfolioResult.value : null;
+  const ownerCities = portfolio?.cities.slice(0, 6) ?? [];
+  const ownerTeam = portfolio?.team.slice(0, 3) ?? [];
+  const ownerTestimonials = portfolio?.testimonials.slice(0, 2) ?? [];
+  const ownerCases = portfolio?.caseStudies.slice(0, 3) ?? [];
 
   return (
     <div className="landing-page">
@@ -66,6 +89,16 @@ export default async function Home() {
               Browse real published properties by city, check dates, and send
               an enquiry for the property team to confirm.
             </p>
+            {/* QA-013: both journeys available immediately — guest booking and
+                owner portfolio — reflecting the 70/30 brand positioning. */}
+            <div className="hero-actions">
+              <Link className="button primary" href="/stays">
+                <Icon name="calendar" size={16} /> Book a Stay
+              </Link>
+              <Link className="button secondary" href="/owners">
+                <Icon name="plus" size={16} /> List your property
+              </Link>
+            </div>
             <Search locations={activeLocations} />
             <div className="landing-hero-note">
               <Icon name="chat" size={17} />
@@ -79,6 +112,117 @@ export default async function Home() {
               <small>{stayMeta(hero)}</small>
             </Link>
           )}
+        </div>
+      </section>
+
+      <section className="landing-section owner-portfolio-band" aria-labelledby="owner-band-title">
+        <div className="container">
+          <div className="landing-section-head">
+            <div>
+              <p className="eyebrow">For property owners · our portfolio</p>
+              <h2 id="owner-band-title">
+                We run stays across {portfolio?.managedCount ?? 0} {""}
+                {(portfolio?.managedCount ?? 0) === 1 ? "property" : "properties"}
+                {ownerCities.length
+                  ? ` in ${ownerCities.length} ${ownerCities.length === 1 ? "city" : "cities"}`
+                  : ""}
+                .
+              </h2>
+            </div>
+            <Link href="/portfolio" className="text-link">
+              View the full portfolio
+            </Link>
+          </div>
+
+          {portfolio === null && (
+            <div className="notice error" role="alert">
+              <p>
+                The portfolio service is unavailable right now. Retry this page,
+                or read about our services while it recovers.
+              </p>
+              <RetryButton label="Retry portfolio" />
+            </div>
+          )}
+
+          {portfolio && ownerCities.length > 0 && (
+            <div className="location-grid">
+              {ownerCities.map((c) => (
+                <Link
+                  key={c.slug}
+                  className="location-tile"
+                  href={`/portfolio/cities/${c.slug}`}
+                >
+                  <span className="location-number">
+                    {c.count} {c.count === 1 ? "stay" : "stays"}
+                  </span>
+                  <p className="eyebrow">
+                    <CityIcon slug={c.slug} size={14} />{" "}
+                    {c.state || "Managed city"}
+                  </p>
+                  <h3>{c.name}</h3>
+                  <span>View managed properties</span>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {portfolio && ownerCases.length > 0 && (
+            <div className="case-grid">
+              {ownerCases.map((item) => (
+                <CaseStudyCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
+
+          <div className="landing-owner-split">
+            <div className="landing-owner-services">
+              <p className="eyebrow">Management services</p>
+              <h3>Listings, availability, guests and on-ground operations.</h3>
+              <p className="muted">
+                Owners hand over the day-to-day; the team keeps listings honest,
+                bookings coordinated and properties cared for.
+              </p>
+              <Link className="button secondary" href="/services">
+                View owner services
+              </Link>
+            </div>
+            {ownerTeam.length > 0 && (
+              <div>
+                <p className="eyebrow">Management team</p>
+                <div className="team-grid">
+                  {ownerTeam.map((member) => (
+                    <TeamCard key={member.id} member={member} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {ownerTestimonials.length > 0 && (
+              <div>
+                <p className="eyebrow">Owner voices · genuine media</p>
+                <div className="testimonial-grid">
+                  {ownerTestimonials.map((item) => (
+                    <TestimonialCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {portfolio &&
+            !ownerCities.length &&
+            !ownerTeam.length &&
+            !ownerTestimonials.length && (
+              <div className="empty-state">
+                <h3>The portfolio is being published.</h3>
+                <p>
+                  City-wise listings, team profiles and owner media go live as
+                  they are approved. Describe your property in the meantime.
+                </p>
+                <Link className="button primary" href="/owners">
+                  List your property
+                </Link>
+              </div>
+            )}
         </div>
       </section>
 
@@ -126,7 +270,7 @@ export default async function Home() {
                   return (
                     <Link
                       className="landing-destination"
-                      href={`/properties?location=${location.slug}`}
+                      href={`/stays/${location.slug}`}
                       key={location.id}
                     >
                       <span className="landing-destination-photo">
@@ -159,8 +303,8 @@ export default async function Home() {
               <p className="eyebrow">Property edit</p>
               <h2 id="showcase-title">Real stays, shown with room to breathe.</h2>
             </div>
-            <Link href="/properties" className="text-link">
-              Explore all properties
+            <Link href="/stays" className="text-link">
+              Explore all stays
             </Link>
           </div>
           {properties.some((property) => property.isDemo) && (

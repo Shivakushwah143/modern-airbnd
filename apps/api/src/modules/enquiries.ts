@@ -9,6 +9,7 @@ import { eligibleUnits } from "./inventory.js";
 import { settings } from "./properties.js";
 import {
   enquiryStatusSchema,
+  idSchema,
   ownerLeadSchema,
   ownerLeadStatusSchema,
   reservationSchema,
@@ -29,6 +30,31 @@ async function upsertGuest(
   });
 }
 
+/**
+ * QA-005: public (guest) enquiry eligibility.
+ *
+ * A guest may only create an enquiry for a published, guest-enabled property
+ * at an active location. Demo inventory never accepts enquiries. Hidden
+ * (guest-disabled, unpublished, or inactive-location) properties are
+ * indistinguishable from missing ones (404) so the API cannot be used to
+ * probe private inventory. Privileged internal reservation flows do not run
+ * this check.
+ */
+export function guestEligibilityErrors(p: {
+  status: string;
+  guestEnabled: boolean;
+  isDemo: boolean;
+  location: { isActive: boolean };
+}): string[] {
+  if (p.status !== "PUBLISHED")
+    return ["Property is not published."];
+  if (!p.guestEnabled)
+    return ["Property is hidden from guests."];
+  if (!p.location.isActive)
+    return ["Property location is inactive."];
+  return [];
+}
+
 async function assertCapacity(
   tx: Prisma.TransactionClient,
   propertyId: string,
@@ -41,8 +67,18 @@ async function assertCapacity(
       include: { units: true, location: true },
     }),
   );
-  if (requirePublished && property.status !== "PUBLISHED")
-    throw new AppError(404, "RESOURCE_NOT_FOUND", "Property not found.");
+  if (requirePublished) {
+    // QA-005: hidden or unpublished properties are indistinguishable from
+    // missing ones on the public surface.
+    if (guestEligibilityErrors(property).length)
+      throw new AppError(404, "RESOURCE_NOT_FOUND", "Property not found.");
+    if (property.isDemo)
+      throw new AppError(
+        409,
+        "DEMO_READ_ONLY",
+        "Demonstration properties do not accept enquiries.",
+      );
+  }
   if (guests > property.maxGuests)
     throw new AppError(
       422,
@@ -134,6 +170,9 @@ publicEnquiries.post("/enquiries", async (req, res) => {
           guestName: b.guestName,
           phone: b.phone,
           message: b.message,
+          // QA-019: the consent decision is stored with a server-side timestamp.
+          consentAccepted: b.consentAccepted,
+          consentRecordedAt: new Date(),
         },
       });
       const s = await settings();
@@ -162,7 +201,30 @@ publicEnquiries.post("/enquiries", async (req, res) => {
 
 publicEnquiries.post("/owner-leads", async (req, res) => {
   const b = ownerLeadSchema.parse(req.body);
-  res.status(201).json({ data: await db.ownerLead.create({ data: b }) });
+  res.status(201).json({
+    data: await db.ownerLead.create({
+      data: { ...b, consentRecordedAt: new Date() },
+    }),
+  });
+});
+
+/**
+ * QA-018: secure acknowledgement lookup. The reference is an unguessable UUID
+ * and the response carries no PII — only whether that exact reference exists —
+ * so the acknowledgement page can verify instead of asserting success for any
+ * random identifier.
+ */
+publicEnquiries.get("/enquiries/:id/receipt", async (req, res) => {
+  const id = idSchema.safeParse(req.params.id);
+  if (!id.success)
+    throw new AppError(404, "RESOURCE_NOT_FOUND", "Enquiry not found.");
+  const enquiry = await db.enquiry.findUnique({
+    where: { id: id.data },
+    select: { id: true },
+  });
+  if (!enquiry)
+    throw new AppError(404, "RESOURCE_NOT_FOUND", "Enquiry not found.");
+  res.json({ data: { reference: enquiry.id } });
 });
 
 export async function adminLists() {

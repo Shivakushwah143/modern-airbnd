@@ -120,6 +120,8 @@ export interface Testimonial {
   quote: string;
   mediaType: "IMAGE" | "VIDEO";
   mediaUrl: string;
+  captionsUrl?: string;
+  transcript?: string;
 }
 export interface PortfolioCaseStudy {
   id: string;
@@ -155,4 +157,37 @@ export interface PortfolioBundle {
 export interface PortfolioCityBundle {
   location: { name: string; slug: string; state: string; isActive: boolean };
   properties: ManagedProperty[];
+}
+export interface PortfolioPropertyBundle {
+  property: {
+    id: string;
+    name: string;
+    slug: string;
+    area: string;
+    propertyType: string;
+    shortDescription: string;
+    description: string;
+    bedrooms: number;
+    bathrooms: number;
+    beds: number;
+    maxGuests: number;
+    inventoryMode: "ENTIRE_PROPERTY" | "MULTI_UNIT";
+    suitedFor: string[];
+    localHighlights: { name: string; detail: string }[];
+    houseRules: string[];
+    checkInInfo: string;
+    checkOutInfo: string;
+    location: { name: string; slug: string; state: string };
+    amenities: Amenity[];
+    media: Media[];
+  };
+  caseStudy: {
+    id: string;
+    title: string;
+    slug: string;
+    city: string;
+    summary: string;
+    outcome: string;
+    coverUrl: string;
+  } | null;
 }
