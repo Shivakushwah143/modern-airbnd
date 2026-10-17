@@ -120,6 +120,9 @@ model Property {
  isDemo Boolean @default(false)
  publishedAt DateTime?
  archivedAt DateTime?
+ guestEnabled Boolean @default(true)
+ portfolioEnabled Boolean @default(true)
+ portfolioCaseStudies PortfolioCaseStudy[]
  units Unit[]
  media PropertyMedia[]
  amenities Amenity[]
@@ -332,4 +335,59 @@ model SiteSettings {
  aboutText String @default("")
  privacyText String @default("")
  termsText String @default("")
+}
+model TeamMember {
+ id String @id @default(uuid()) @db.Uuid
+ name String
+ title String @default("")
+ role String @default("")
+ bio String @default("")
+ photoUrl String @default("")
+ sortOrder Int @default(0)
+ isPublished Boolean @default(false)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([isPublished,sortOrder])
+}
+model PortfolioCaseStudy {
+ id String @id @default(uuid()) @db.Uuid
+ propertyId String? @db.Uuid
+ property Property? @relation(fields:[propertyId], references:[id])
+ title String
+ slug String @unique
+ city String @default("")
+ summary String @default("")
+ outcome String @default("")
+ coverUrl String @default("")
+ sortOrder Int @default(0)
+ isPublished Boolean @default(false)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([isPublished,sortOrder])
+ @@index([city])
+}
+model MediaTestimonial {
+ id String @id @default(uuid()) @db.Uuid
+ ownerName String
+ city String @default("")
+ quote String @default("")
+ mediaType String @default("IMAGE")
+ mediaUrl String @default("")
+ sortOrder Int @default(0)
+ isPublished Boolean @default(false)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([isPublished,sortOrder])
+}
+model CmsPage {
+ id String @id @default(uuid()) @db.Uuid
+ slug String @unique
+ title String
+ body String @default("")
+ seoTitle String @default("")
+ seoDescription String @default("")
+ isPublished Boolean @default(false)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([isPublished])
 }

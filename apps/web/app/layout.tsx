@@ -39,7 +39,7 @@ export default function RootLayout({
           <div className="container footer-grid">
             <div>
               <Link href="/" className="brand">
-                Modern <strong>Airbnd</strong>
+                Modern <strong>Stayz</strong>
               </Link>
               <p>
                 Find your place.
@@ -48,8 +48,14 @@ export default function RootLayout({
               </p>
             </div>
             <nav aria-label="Footer">
-              <Link href="/properties">Explore properties</Link>
+              <Link href="/stays">Explore stays</Link>
+              <Link href="/locations">Destinations</Link>
+              <Link href="/portfolio">Owner portfolio</Link>
+              <Link href="/services">Our services</Link>
+            </nav>
+            <nav aria-label="Company">
               <Link href="/about">About us</Link>
+              <Link href="/owners">List your property</Link>
               <Link href="/contact">Contact</Link>
             </nav>
             <nav aria-label="Policies">

@@ -4,43 +4,56 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
+import {
+  NAV_LINKS,
+  headerCta,
+  isNavActive,
+  navMode,
+} from "@/lib/nav";
+
 export function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const publicHeader = !pathname.startsWith("/admin");
-  const links = [
-    ["/properties", "Stays"],
-    ["/locations", "Locations"],
-    ["/owners", "For Owners"],
-    ["/about", "About"],
-    ["/contact", "Contact"],
-  ];
+  const mode = navMode(pathname);
+  const links = NAV_LINKS[mode];
+  const cta = headerCta(mode);
+  const publicHeader = mode !== "admin";
+
   return (
-    <header className={`site-header ${publicHeader ? "public-header" : ""}`}>
+    <header
+      className={`site-header ${publicHeader ? "public-header" : ""} nav-${mode}`}
+      data-nav-mode={mode}
+    >
       <div className="container header-inner">
         <Link href="/" className="brand" aria-label="Modern Stayz home">
           <span className="brand-mark">
             <Icon size={25} />
           </span>
           <span>
-            Modern <strong>Airbnd</strong>
+            Modern <strong>Stayz</strong>
           </span>
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
-          {links.map(([href, label]) => (
-            <Link key={href} href={href}>
-              {label}
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={
+                isNavActive(pathname, link.href) ? "page" : undefined
+              }
+            >
+              {link.label}
             </Link>
           ))}
         </nav>
-        <Link className="button secondary header-contact" href="/contact">
-          <Icon name="chat" size={18} />
-          Get in touch
+        <Link className="button secondary header-contact" href={cta.href}>
+          <Icon name={cta.icon} size={18} />
+          {cta.label}
         </Link>
         {publicHeader && (
-          <Link className="header-quick-contact" href="/contact">
-            <Icon name="chat" size={17} />
-            <span>Contact</span>
+          <Link className="header-quick-contact" href={cta.href}>
+            <Icon name={cta.icon} size={17} />
+            <span>{cta.label}</span>
           </Link>
         )}
         <button
@@ -54,12 +67,26 @@ export function Header() {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Explore Modern Stayz"
+        title={
+          mode === "admin"
+            ? "Admin workspaces"
+            : mode === "owner"
+              ? "Modern Stayz for owners"
+              : "Explore Modern Stayz"
+        }
       >
         <nav className="mobile-links">
-          {links.map(([href, label]) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)}>
-              {label}
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={
+                isNavActive(pathname, link.href) ? "page" : undefined
+              }
+              onClick={() => setOpen(false)}
+            >
+              <Icon name={link.icon} size={18} />
+              {link.label}
             </Link>
           ))}
         </nav>

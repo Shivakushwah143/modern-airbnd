@@ -16,6 +16,8 @@ import { admin } from "./modules/admin.js";
 import { publicEnquiries } from "./modules/enquiries.js";
 import { operations } from "./modules/operations.js";
 import { publicProperties, settings } from "./modules/properties.js";
+import { portfolioAdmin, portfolioPublic } from "./modules/portfolio.js";
+import { cmsAdmin, cmsPublic } from "./modules/cms.js";
 import { idSchema } from "./modules/schemas.js";
 declare module "express-session" {
   interface SessionData {
@@ -177,7 +179,11 @@ app.post("/api/v1/admin/auth/logout", (req, res, next) =>
 );
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/admin", operations);
+app.use("/api/v1/admin", portfolioAdmin);
+app.use("/api/v1/admin", cmsAdmin);
 app.use("/api/v1", publicEnquiries);
+app.use("/api/v1", portfolioPublic);
+app.use("/api/v1", cmsPublic);
 app.get("/api/v1/locations", async (_req, res) =>
   res.json({
     data: await db.location.findMany({

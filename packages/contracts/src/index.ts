@@ -48,6 +48,8 @@ export interface Proof {
   isVisible: boolean;
 }
 export interface Property {
+  guestEnabled?: boolean;
+  portfolioEnabled?: boolean;
   ownerId?: string | null;
   inventoryMode: "ENTIRE_PROPERTY" | "MULTI_UNIT";
   inventoryReviewRequired: boolean;
@@ -96,4 +98,61 @@ export interface Settings {
   aboutText: string;
   privacyText: string;
   termsText: string;
+}
+export interface PortfolioCity {
+  name: string;
+  slug: string;
+  state: string;
+  count: number;
+}
+export interface TeamMember {
+  id: string;
+  name: string;
+  title: string;
+  role: string;
+  bio: string;
+  photoUrl: string;
+}
+export interface Testimonial {
+  id: string;
+  ownerName: string;
+  city: string;
+  quote: string;
+  mediaType: "IMAGE" | "VIDEO";
+  mediaUrl: string;
+}
+export interface PortfolioCaseStudy {
+  id: string;
+  title: string;
+  slug: string;
+  city: string;
+  summary: string;
+  outcome: string;
+  coverUrl: string;
+  property: { slug: string; name: string } | null;
+}
+export interface ManagedProperty {
+  id: string;
+  name: string;
+  slug: string;
+  area: string;
+  propertyType: string;
+  shortDescription: string;
+  bedrooms: number;
+  bathrooms: number;
+  beds: number;
+  maxGuests: number;
+  isDemo: boolean;
+  media: Media[];
+}
+export interface PortfolioBundle {
+  caseStudies: PortfolioCaseStudy[];
+  team: TeamMember[];
+  testimonials: Testimonial[];
+  cities: PortfolioCity[];
+  managedCount: number;
+}
+export interface PortfolioCityBundle {
+  location: { name: string; slug: string; state: string; isActive: boolean };
+  properties: ManagedProperty[];
 }

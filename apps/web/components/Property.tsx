@@ -24,11 +24,13 @@ export function AvailabilityBadge({ value }: { value: Availability }) {
 export function PropertyCard({
   property: p,
   query = "",
+  basePath = "/properties",
 }: {
   property: Property;
   query?: string;
+  basePath?: string;
 }) {
-  const href = `/properties/${p.slug}${query ? "?" + query : ""}`;
+  const href = `${basePath}/${p.slug}${query ? "?" + query : ""}`;
   return (
     <article
       className={`property-card ${p.availability.status === "UNAVAILABLE" ? "unavailable-card" : ""}`}

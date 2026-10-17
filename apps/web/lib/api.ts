@@ -1,4 +1,5 @@
 import type { Settings } from "@modern-airbnd/contracts";
+export type { Settings };
 export class ApiError extends Error {
   constructor(
     public status: number,

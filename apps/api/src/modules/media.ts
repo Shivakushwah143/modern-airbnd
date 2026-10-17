@@ -42,6 +42,32 @@ export async function signature(propertyId: string) {
     cloudName: env.CLOUDINARY_CLOUD_NAME,
   };
 }
+/** Signed direct-upload params for portfolio media (team photo, testimonial
+ * screenshot/short video, case-study cover). Slot-scoped folder keeps assets
+ * organised; formats are restricted per kind. Admin session required upstream. */
+export function portfolioSignature(
+  slot: "team" | "testimonials" | "cases",
+  kind: "image" | "video",
+) {
+  configured();
+  const params = {
+    timestamp: Math.floor(Date.now() / 1000),
+    public_id: `modern-airbnd/portfolio/${slot}/${randomUUID()}`,
+    overwrite: false,
+    allowed_formats:
+      kind === "image" ? "jpg,jpeg,png,webp" : "mp4,webm,mov",
+    type: "upload",
+  };
+  return {
+    ...params,
+    signature: cloudinary.utils.api_sign_request(
+      params,
+      env.CLOUDINARY_API_SECRET,
+    ),
+    apiKey: env.CLOUDINARY_API_KEY,
+    cloudName: env.CLOUDINARY_CLOUD_NAME,
+  };
+}
 export async function registerMedia(propertyId: string, body: unknown) {
   configured();
   const b = z

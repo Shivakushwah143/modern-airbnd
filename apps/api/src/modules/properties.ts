@@ -120,6 +120,7 @@ export async function publicProperties(query: unknown, slug?: string) {
   const q = searchSchema.parse(query);
   const where: Prisma.PropertyWhereInput = {
     status: "PUBLISHED",
+    guestEnabled: true,
     location: { isActive: true, ...(q.location ? { slug: q.location } : {}) },
     ...(slug ? { slug } : {}),
   };
