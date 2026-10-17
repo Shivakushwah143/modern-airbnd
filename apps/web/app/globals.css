@@ -3790,6 +3790,34 @@ header[data-nav-mode="owner"] .brand strong {
 .lightbox-close {
   justify-self: end;
 }
+.lightbox-image-wrap {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+}
+.lightbox-step {
+  position: absolute;
+  z-index: 1;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid #ffffff78;
+  border-radius: 999px;
+  background: #10241de8;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.lightbox-step:hover {
+  background: #183c30;
+}
+.lightbox-previous {
+  left: 10px;
+}
+.lightbox-next {
+  right: 10px;
+}
 
 /* --- Services page (W14) ------------------------------------------------- */
 .services-list {
@@ -4041,5 +4069,344 @@ header[data-nav-mode="owner"] .brand strong {
 @media (min-width: 980px) {
   .services-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Modern Stayz editorial system and the compact admin patterns used by W01–W24. */
+:root {
+  --page: #f7f5ef;
+  --surface: #fffefa;
+  --primary: #183c30;
+  --primary-hover: #245544;
+  --text: #202a25;
+  --muted: #5d6962;
+  --border: #dfded5;
+  --accent: #a65c3f;
+  --radius: 18px;
+  --shadow: 0 8px 28px #193b2e0c;
+}
+
+.brand-mark {
+  border-radius: 14px 14px 5px 5px;
+}
+
+.landing-page {
+  background: var(--page);
+}
+
+.landing-hero {
+  min-height: min(760px, calc(100dvh - 76px));
+}
+
+.landing-hero::before {
+  background:
+    linear-gradient(96deg, #071811f5 0%, #102a20dd 44%, #102a2052 100%),
+    linear-gradient(0deg, #071811b8 0%, #07181112 55%, #07181161 100%);
+}
+
+.landing-hero .hero-actions .button {
+  min-width: 168px;
+  border-radius: 999px;
+}
+
+.landing-hero .button.secondary {
+  border-color: #ffffffa8;
+  background: #ffffffed;
+}
+
+.landing-destination-photo {
+  background: #ebe7dc;
+  box-shadow:
+    0 0 0 4px var(--page),
+    0 0 0 10px #e8e3d6,
+    0 16px 38px #183c3014;
+}
+
+.landing-owner-split {
+  margin-top: clamp(36px, 6vw, 72px);
+}
+
+.workspace-card,
+.portfolio-card,
+.service-card,
+.testimonial-card,
+.team-card {
+  border-color: #dfded5;
+  background: #fffefa;
+  box-shadow: 0 6px 24px #183c3008;
+}
+
+.workspace-card:hover,
+.workspace-card:focus-visible {
+  border-color: #aebbb1;
+}
+
+.admin-finance-page {
+  min-height: 65vh;
+  padding-top: clamp(32px, 6vw, 72px);
+  padding-bottom: 80px;
+}
+
+.admin-finance-page h1 {
+  font-family: "Fraunces Variable", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2.4rem, 7vw, 4.5rem);
+}
+
+.admin-finance-page .intro {
+  max-width: 62ch;
+}
+
+.admin-layout {
+  padding-top: 28px;
+}
+
+.admin-nav {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f0eee6;
+  padding: 12px;
+}
+
+.admin-nav button {
+  border-radius: 999px;
+  padding-inline: 16px;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.admin-nav button:not(.active):hover {
+  background: #e4e4da;
+}
+
+.admin-nav .active {
+  background: var(--primary);
+}
+
+.admin-main .stat-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-listing-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 18px 0 22px;
+}
+
+.visibility-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 10px 0;
+}
+
+.visibility-flags .checkbox {
+  min-height: 40px;
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.admin-main .stat {
+  min-width: 0;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: left;
+}
+
+.admin-main .stat strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-property-list article,
+.setting-row {
+  border-radius: 16px;
+}
+
+.setting-row {
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  margin-block: 10px;
+}
+
+.admin-section {
+  border-color: var(--border);
+}
+
+.admin-layout input,
+.admin-layout select,
+.admin-layout textarea,
+.admin-finance-page input,
+.admin-finance-page select,
+.admin-finance-page textarea {
+  min-height: 46px;
+  border-radius: 10px;
+}
+
+.admin-layout textarea {
+  min-height: 112px;
+}
+
+.cms-preview {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f1efe8;
+}
+
+.cms-preview summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.cms-preview-sheet {
+  margin-top: 10px;
+  padding: clamp(18px, 4vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.cms-preview-sheet h2 {
+  font-family: "Fraunces Variable", Georgia, serif;
+}
+
+.cms-preview-sheet p:last-child {
+  margin-bottom: 0;
+}
+
+.workspace-card,
+.portfolio-card,
+.service-card,
+.testimonial-card,
+.team-card,
+.property-card,
+.location-tile {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .landing-hero {
+    min-height: auto;
+  }
+
+  .landing-hero-inner {
+    align-items: start;
+  }
+
+  .landing-hero .search-card {
+    margin-top: 22px;
+  }
+
+  .admin-layout {
+    gap: 16px;
+    padding-top: 16px;
+  }
+
+  .admin-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    border-radius: 14px;
+    padding: 8px;
+  }
+
+  .admin-nav button {
+    flex: 0 0 auto;
+  }
+
+  .admin-nav button:last-child {
+    margin-left: auto;
+  }
+
+  .admin-main .stat-grid {
+    gap: 10px;
+  }
+
+  .admin-main .stat strong {
+    font-size: clamp(1.5rem, 8vw, 2rem);
+  }
+
+  .setting-row > div,
+  .setting-row .row-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .setting-row .row-actions > .button,
+  .setting-row .row-actions > select {
+    flex: 1 1 140px;
+  }
+
+  .admin-property-list article {
+    align-items: flex-start;
+  }
+
+  .admin-property-list article > div:nth-child(2) {
+    flex-basis: calc(100% - 124px);
+  }
+
+  .admin-property-list .row-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-property-list .row-actions .button {
+    width: 100%;
+  }
+
+  .media-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .admin-listing-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 0.55fr);
+    align-items: end;
+  }
+
+  .admin-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+  }
+
+  .admin-nav {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-nav .eyebrow,
+  .admin-nav h2 {
+    display: block;
+    margin: 4px 8px;
+  }
+
+  .admin-nav button {
+    text-align: left;
+  }
+
+  .admin-main .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-destination,
+  .landing-hero-card,
+  .admin-nav button,
+  .workspace-card {
+    transition: none;
   }
 }

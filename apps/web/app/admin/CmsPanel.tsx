@@ -175,26 +175,31 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
               Cancel
             </button>
           </div>
+          <details className="cms-preview">
+            <summary>Preview this draft</summary>
+            <article className="cms-preview-sheet">
+              <p className="eyebrow">/{draft.slug || "page-slug"}</p>
+              <h2>{draft.title || "Page title"}</h2>
+              {draft.body
+                .split(/\n\s*\n/)
+                .filter((paragraph) => paragraph.trim())
+                .map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </article>
+          </details>
         </form>
       )}
 
       {pages.map((p) => (
-        <div
-          key={p.id}
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 0",
-            borderBottom: "1px solid var(--border)",
-          }}
-        >
-          <div>
+        <div key={p.id} className="content-row">
+          <div className="row-main">
             <strong>{p.title}</strong>{" "}
             <span className="muted small">/{p.slug}</span>
-            {!p.isPublished && <span className="badge draft">Draft</span>}
+            <small>
+              Updated {new Date(p.updatedAt).toLocaleDateString("en-IN")}
+            </small>
+            <span className={`badge ${p.isPublished ? "published" : "draft"}`}>
+              {p.isPublished ? "Published" : "Draft"}
+            </span>
           </div>
           <div className="row-actions">
             <label className="checkbox">

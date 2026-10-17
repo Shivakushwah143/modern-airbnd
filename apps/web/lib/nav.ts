@@ -31,7 +31,8 @@ export function navMode(pathname: string): NavMode {
   if (
     pathname === "/portfolio" ||
     pathname.startsWith("/portfolio/") ||
-    pathname === "/services"
+    pathname === "/services" ||
+    pathname === "/owners"
   )
     return "owner";
   return "neutral";
@@ -39,23 +40,24 @@ export function navMode(pathname: string): NavMode {
 
 export const NAV_LINKS: Record<NavMode, NavLink[]> = {
   neutral: [
-    { href: "/stays", label: "Stays", icon: "bed" },
-    { href: "/locations", label: "Destinations", icon: "pin" },
-    { href: "/portfolio", label: "For Owners", icon: "home" },
+    { href: "/portfolio", label: "Our Portfolio", icon: "home" },
+    { href: "/stays", label: "Book a Stay", icon: "bed" },
+    { href: "/locations", label: "City Search", icon: "pin" },
     { href: "/about", label: "About", icon: "shield" },
     { href: "/contact", label: "Contact", icon: "chat" },
   ],
   guest: [
     { href: "/", label: "Explore", icon: "home" },
-    { href: "/stays", label: "Stays", icon: "bed" },
-    { href: "/locations", label: "Destinations", icon: "pin" },
+    { href: "/stays", label: "Book a Stay", icon: "bed" },
+    { href: "/locations", label: "City Search", icon: "pin" },
     { href: "/portfolio", label: "For Owners", icon: "home" },
     { href: "/about", label: "About", icon: "shield" },
     { href: "/contact", label: "Contact", icon: "chat" },
   ],
   owner: [
-    { href: "/portfolio", label: "Portfolio", icon: "home" },
+    { href: "/portfolio", label: "Our Portfolio", icon: "home" },
     { href: "/services", label: "Services", icon: "shield" },
+    { href: "/portfolio/team", label: "Our Team", icon: "home" },
     { href: "/stays", label: "Live stays", icon: "bed" },
     { href: "/owners", label: "List your property", icon: "plus" },
     { href: "/contact", label: "Contact", icon: "chat" },

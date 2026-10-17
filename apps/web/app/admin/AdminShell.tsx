@@ -28,7 +28,9 @@ type Tab =
   | "locations"
   | "portfolio"
   | "cms"
-  | "settings";
+  | "settings"
+  | "finance"
+  | "media";
 export const ALL_TABS: Tab[] = [
   "dashboard",
   "properties",
@@ -219,6 +221,11 @@ export function AdminShell({
   const [editing, setEditing] = useState<string | null>(null),
     [draft, setDraft] = useState<Draft>(defaultProperty),
     [confirm, setConfirm] = useState<Confirm | null>(null);
+  const [savedDraftSnapshot, setSavedDraftSnapshot] = useState("");
+  const [propertySearch, setPropertySearch] = useState("");
+  const [propertyStatus, setPropertyStatus] = useState<
+    Property["status"] | "ALL"
+  >("ALL");
   const [unitId, setUnitId] = useState(""),
     [unitName, setUnitName] = useState(""),
     [block, setBlock] = useState({
@@ -287,6 +294,16 @@ export function AdminShell({
     } | null>(null),
     [reviewConfirmed, setReviewConfirmed] = useState(false);
   const current = properties.find((p) => p.id === editing);
+  const visibleProperties = properties.filter((property) => {
+    const query = propertySearch.trim().toLowerCase();
+    const matchesQuery = `${property.name} ${property.location.name} ${property.area}`
+      .toLowerCase()
+      .includes(query);
+    return (
+      matchesQuery &&
+      (propertyStatus === "ALL" || property.status === propertyStatus)
+    );
+  });
   const unit =
     current?.units.find((u) => u.id === unitId) ||
     current?.units.find(
@@ -333,6 +350,42 @@ export function AdminShell({
         }
       });
   }, []);
+  useEffect(() => {
+    if (editing === null || JSON.stringify(draft) === savedDraftSnapshot) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const guardInternalNavigation = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const target = event.target;
+      const anchor =
+        target instanceof Element
+          ? target.closest<HTMLAnchorElement>("a[href]")
+          : null;
+      if (!anchor || anchor.target === "_blank") return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
+      if (!confirmEditorExit()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    document.addEventListener("click", guardInternalNavigation, true);
+    return () => {
+      window.removeEventListener("beforeunload", warnBeforeUnload);
+      document.removeEventListener("click", guardInternalNavigation, true);
+    };
+  }, [editing, draft, savedDraftSnapshot]);
   async function run(fn: () => Promise<void>, success = "Saved successfully.") {
     setBusy(true);
     setError("");
@@ -355,14 +408,14 @@ export function AdminShell({
     setReadiness(null);
     setReviewConfirmed(false);
     setEditing(p?.id || "new");
-    setDraft(
-      p
-        ? draftOf(p)
-        : {
-            ...defaultProperty,
-            locationId: locations.find((l) => l.isActive)?.id || "",
-          },
-    );
+    const nextDraft = p
+      ? draftOf(p)
+      : {
+          ...defaultProperty,
+          locationId: locations.find((l) => l.isActive)?.id || "",
+        };
+    setDraft(nextDraft);
+    setSavedDraftSnapshot(JSON.stringify(nextDraft));
     setUnitId(p?.units[0]?.id || "");
     setError("");
     setNotice("");
@@ -386,6 +439,9 @@ export function AdminShell({
           }),
         },
       );
+      const savedDraft = draftOf(p);
+      setDraft(savedDraft);
+      setSavedDraftSnapshot(JSON.stringify(savedDraft));
       await refresh();
       setEditing(p.id);
       setUnitId(p.units[0]?.id || "");
@@ -443,6 +499,13 @@ export function AdminShell({
   function ask(title: string, message: string, action: () => Promise<void>) {
     setConfirm({ title, message, action });
   }
+  function confirmEditorExit() {
+    if (editing === null || JSON.stringify(draft) === savedDraftSnapshot)
+      return true;
+    return window.confirm(
+      "This property has unsaved changes. Leave the editor and discard them?",
+    );
+  }
   async function status(action: string) {
     if (!current) return;
     await api(`/admin/properties/${current.id}/${action}`, { method: "POST" });
@@ -461,8 +524,10 @@ export function AdminShell({
           <Icon name="shield" size={30} />
         </span>
         <p className="eyebrow">Modern Stayz</p>
-        <h1>Owner access</h1>
-        <p className="muted">Manage your properties and availability.</p>
+        <h1>Admin sign in</h1>
+        <p className="muted">
+          Sign in to manage listings, guest operations and site content.
+        </p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -502,39 +567,46 @@ export function AdminShell({
   return (
     <div className="admin-layout container">
       <aside className="admin-nav">
-        <p className="eyebrow">OWNER WORKSPACE</p>
-        <h2>Your portfolio</h2>
-        {tabs.map((t) => (
-          <button
-            className={tab === t ? "active" : ""}
-            key={t}
-            onClick={() => {
-              setTab(t);
-              setEditing(null);
-              setError("");
-            }}
-          >
-            {t === "ownerLeads"
-              ? "Owner Leads"
-              : t === "settings"
-              ? "Business & contact"
-              : t === "dashboard"
-              ? "Dashboard"
-              : t === "portfolio"
-              ? "Portfolio"
-              : t === "cms"
-              ? "Content pages"
-              : t[0].toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+        <p className="eyebrow">MODERN STAYZ / ADMIN</p>
+        <h2>Workspace</h2>
+        {(tabs.length <= 6 || defaultTab !== "dashboard") &&
+          tabs.map((t) => (
+            <button
+              className={tab === t ? "active" : ""}
+              key={t}
+              onClick={() => {
+                if (!confirmEditorExit()) return;
+                setTab(t);
+                setEditing(null);
+                setError("");
+              }}
+            >
+              {t === "ownerLeads"
+                ? "Owner Leads"
+                : t === "settings"
+                  ? "Business & contact"
+                  : t === "dashboard"
+                    ? "Dashboard"
+                    : t === "portfolio"
+                      ? "Portfolio"
+                      : t === "cms"
+                        ? "Content pages"
+                        : t === "finance"
+                          ? "Finance"
+                          : t === "media"
+                            ? "Media library"
+                            : t[0].toUpperCase() + t.slice(1)}
+            </button>
+          ))}
         <button
-          onClick={() =>
+          onClick={() => {
+            if (!confirmEditorExit()) return;
             void run(async () => {
               await api("/admin/auth/logout", { method: "POST" });
               setAuth(false);
               setEditing(null);
-            }, "Signed out.")
-          }
+            }, "Signed out.");
+          }}
         >
           Sign out
         </button>
@@ -585,8 +657,33 @@ export function AdminShell({
                 </div>
               ))}
             </div>
+            <div className="admin-listing-controls">
+              <label>
+                Search properties
+                <input
+                  type="search"
+                  value={propertySearch}
+                  onChange={(e) => setPropertySearch(e.target.value)}
+                  placeholder="Property, city or area"
+                />
+              </label>
+              <label>
+                Publication status
+                <select
+                  value={propertyStatus}
+                  onChange={(e) =>
+                    setPropertyStatus(e.target.value as Property["status"] | "ALL")
+                  }
+                >
+                  <option value="ALL">All properties</option>
+                  <option value="PUBLISHED">Published</option>
+                  <option value="DRAFT">Drafts</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </label>
+            </div>
             <div className="admin-property-list">
-              {properties.map((p) => (
+              {visibleProperties.map((p) => (
                 <article key={p.id}>
                   <div className="admin-thumb">
                     <Photo media={p.media[0]} demo={p.isDemo} />
@@ -603,6 +700,42 @@ export function AdminShell({
                         : `${p.units.filter((u) => u.isActive && !u.isEntireProperty).length} active rooms`}{" "}
                       · {p.units.flatMap((u) => u.blocks).length} date blocks
                     </p>
+                    <div className="visibility-flags" aria-label="Publication channels">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={p.guestEnabled !== false}
+                          disabled={busy}
+                          onChange={(e) =>
+                            void run(async () => {
+                              await api(`/admin/portfolio/properties/${p.id}`, {
+                                method: "PATCH",
+                                body: JSON.stringify({ guestEnabled: e.target.checked }),
+                              });
+                              await refresh();
+                            }, "Guest listing visibility updated.")
+                          }
+                        />
+                        Guest listing
+                      </label>
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={p.portfolioEnabled !== false}
+                          disabled={busy}
+                          onChange={(e) =>
+                            void run(async () => {
+                              await api(`/admin/portfolio/properties/${p.id}`, {
+                                method: "PATCH",
+                                body: JSON.stringify({ portfolioEnabled: e.target.checked }),
+                              });
+                              await refresh();
+                            }, "Portfolio visibility updated.")
+                          }
+                        />
+                        Owner portfolio
+                      </label>
+                    </div>
                     <small>
                       Updated{" "}
                       {new Date(p.updatedAt).toLocaleDateString("en-IN")}
@@ -646,13 +779,31 @@ export function AdminShell({
                 </article>
               ))}
             </div>
-            {!properties.length && (
+            {!visibleProperties.length && (
               <div className="empty-state">
-                <h2>Your first property starts here.</h2>
-                <p>
-                  Create a draft, add photos and contact details, then publish
-                  when it’s ready.
-                </p>
+                {properties.length ? (
+                  <>
+                    <h2>No properties match these filters.</h2>
+                    <p>Clear the search or choose another publication status.</p>
+                    <button
+                      className="button secondary"
+                      onClick={() => {
+                        setPropertySearch("");
+                        setPropertyStatus("ALL");
+                      }}
+                    >
+                      Clear filters
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h2>Your first property starts here.</h2>
+                    <p>
+                      Create a draft, add photos and contact details, then publish
+                      when it&apos;s ready.
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </>
@@ -662,6 +813,7 @@ export function AdminShell({
             <button
               className="text-link back-link"
               onClick={() => {
+                if (!confirmEditorExit()) return;
                 setEditing(null);
                 setError("");
               }}
@@ -1781,6 +1933,47 @@ export function AdminShell({
         )}
         {tab === "portfolio" && <PortfolioPanel run={run} ask={ask} />}
         {tab === "cms" && <CmsPanel run={run} ask={ask} />}
+        {tab === "finance" && (
+          <section className="admin-finance-page">
+            <p className="eyebrow">PMS / FINANCE</p>
+            <h1>Financial records</h1>
+            <p className="intro">
+              Payment verification, owner statements and reconciliation are not
+              available in the current API. No balances or payment states are
+              shown until those records are supported by the PMS.
+            </p>
+            <div className="notice">
+              <strong>Finance workspace dependency</strong>
+              <p>
+                This screen needs permission checked finance endpoints,
+                auditable ledger data and reconciliation actions before it can
+                display or change financial records.
+              </p>
+            </div>
+          </section>
+        )}
+        {tab === "media" && (
+          <section className="admin-finance-page">
+            <p className="eyebrow">CMS / MEDIA</p>
+            <h1>Media library</h1>
+            <p className="intro">
+              Media is managed on the record it belongs to, using existing
+              signed uploads, alt text and consent controls.
+            </p>
+            <div className="workspace-grid">
+              <Link className="workspace-card" href="/admin/listings">
+                <h2>Property photography</h2>
+                <p>Upload and order property photos with descriptive alt text.</p>
+                <span className="text-link">Open Listings</span>
+              </Link>
+              <Link className="workspace-card" href="/admin/portfolio">
+                <h2>Owner stories and profiles</h2>
+                <p>Manage consented team, case study and testimonial media.</p>
+                <span className="text-link">Open Portfolio</span>
+              </Link>
+            </div>
+          </section>
+        )}
         {tab === "owners" && (
           <>
             <h1>Owners</h1>

@@ -63,7 +63,17 @@ export function OwnerLeadForm() {
             {label}
             <input
               required={required}
-              type={key === "email" ? "email" : "text"}
+              type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
+              autoComplete={
+                key === "name"
+                  ? "name"
+                  : key === "phone"
+                    ? "tel"
+                    : key === "email"
+                      ? "email"
+                      : "off"
+              }
+              inputMode={key === "phone" ? "tel" : undefined}
               value={form[key]}
               onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             />
@@ -91,8 +101,8 @@ export function OwnerLeadForm() {
         enquiry and process my details as described in the{" "}
         <a href="/privacy">Privacy Notice</a>.
       </label>
-      {error && <p className="field-error">{error}</p>}
-      {status && <p className="notice success">{status}</p>}
+      {error && <p className="field-error" role="alert">{error}</p>}
+      {status && <p className="notice success" role="status">{status}</p>}
       <button className="button primary" disabled={busy}>
         {busy ? "Saving..." : "Submit property lead"}
       </button>

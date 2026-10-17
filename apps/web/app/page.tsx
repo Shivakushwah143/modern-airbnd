@@ -83,20 +83,19 @@ export default async function Home() {
         )}
         <div className="container landing-hero-inner">
           <div className="landing-hero-copy">
-            <p className="eyebrow">Modern Stayz / enquiry-first stays</p>
-            <h1>Find a stay that feels considered.</h1>
+            <p className="eyebrow">Thoughtful stays, carefully managed</p>
+            <h1>Places with a little more care.</h1>
             <p>
-              Browse real published properties by city, check dates, and send
-              an enquiry for the property team to confirm.
+              We look after distinctive homes and help guests find a stay that
+              feels considered, from the first hello to checkout.
             </p>
-            {/* QA-013: both journeys available immediately — guest booking and
-                owner portfolio — reflecting the 70/30 brand positioning. */}
+            {/* Both journeys remain visible in the opening view; portfolio leads. */}
             <div className="hero-actions">
-              <Link className="button primary" href="/stays">
-                <Icon name="calendar" size={16} /> Book a Stay
+              <Link className="button primary" href="/portfolio">
+                <Icon name="home" size={16} /> Explore Portfolio
               </Link>
-              <Link className="button secondary" href="/owners">
-                <Icon name="plus" size={16} /> List your property
+              <Link className="button secondary" href="/stays">
+                <Icon name="calendar" size={16} /> Book a Stay
               </Link>
             </div>
             <Search locations={activeLocations} />
@@ -261,24 +260,14 @@ export default async function Home() {
               )}
               <div className="landing-destinations">
                 {activeLocations.map((location) => {
-                  const cityProperties = properties.filter(
-                    (property) => property.location.id === location.id,
-                  );
-                  const image = cityProperties.find(
-                    (property) => property.media.length,
-                  );
                   return (
                     <Link
                       className="landing-destination"
                       href={`/stays/${location.slug}`}
                       key={location.id}
                     >
-                      <span className="landing-destination-photo">
-                        {image ? (
-                          <Photo media={image.media[0]} />
-                        ) : (
-                          <Icon name="pin" size={30} />
-                        )}
+                      <span className="landing-destination-photo" aria-hidden="true">
+                        <CityIcon slug={location.slug} size={46} />
                       </span>
                       <strong>{location.name}</strong>
                       {location.state && <small>{location.state}</small>}

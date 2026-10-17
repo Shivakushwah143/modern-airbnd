@@ -17,7 +17,7 @@ const SERVICES = [
   },
   {
     title: "Availability & reservations",
-    body: "Unit-level calendars, blocked dates and reservation records so your property is never double-booked and every stay has a clear source.",
+    body: "Unit-level calendars, blocked dates and reservation records help the team coordinate availability and keep each stay linked to its source.",
     icon: "calendar",
   },
   {
@@ -27,7 +27,7 @@ const SERVICES = [
   },
   {
     title: "Housekeeping & maintenance",
-    body: "Task assignment after each stay, due-date tracking and a maintenance queue with priorities, so issues are resolved before guests notice.",
+    body: "Task assignment after each stay, due-date tracking and a maintenance queue with priorities help the team coordinate timely responses.",
     icon: "check",
   },
   {

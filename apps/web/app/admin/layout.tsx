@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Owner workspace",
+  title: "Admin workspace",
   robots: { index: false, follow: false },
 };
 export default function AdminLayout({

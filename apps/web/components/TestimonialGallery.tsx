@@ -16,10 +16,13 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const visible = items.filter(
     (item) => filter === "ALL" || item.mediaType === filter,
   );
+  const screenshots = visible.filter((item) => item.mediaType === "IMAGE");
 
   useEffect(() => {
     if (openIndex === null) return;
@@ -27,15 +30,42 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpenIndex(null);
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setOpenIndex((index) =>
+          index === null ? null : (index - 1 + screenshots.length) % screenshots.length,
+        );
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setOpenIndex((index) =>
+          index === null ? null : (index + 1) % screenshots.length,
+        );
+      }
+      if (e.key === "Tab") {
+        const controls = lightboxRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+        );
+        if (!controls?.length) return;
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
       previous?.focus?.();
     };
-  }, [openIndex]);
+  }, [openIndex, screenshots.length]);
 
-  const opened = openIndex === null ? null : visible[openIndex] ?? null;
+  const opened = openIndex === null ? null : screenshots[openIndex] ?? null;
 
   return (
     <>
@@ -66,7 +96,7 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
       </div>
 
       <div className="testimonial-grid">
-        {visible.map((item, index) => {
+        {visible.map((item) => {
           const label = `${item.ownerName} uploaded ${item.mediaType === "VIDEO" ? "a short video" : "a screenshot"}`;
           return (
             <figure className="testimonial-card" key={item.id}>
@@ -89,7 +119,9 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
                     <button
                       type="button"
                       className="lightbox-trigger"
-                      onClick={() => setOpenIndex(index)}
+                      onClick={() =>
+                        setOpenIndex(screenshots.findIndex((image) => image.id === item.id))
+                      }
                       aria-label={`View full screenshot: ${label}`}
                     >
                       <img
@@ -104,9 +136,11 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
                   )}
                 </div>
               )}
-              <blockquote>
-                <p>{item.quote || "Owner-shared media from their property."}</p>
-              </blockquote>
+              {item.quote.trim() && (
+                <blockquote>
+                  <p>{item.quote}</p>
+                </blockquote>
+              )}
               <figcaption>
                 <cite>
                   <strong>{item.ownerName}</strong>
@@ -129,12 +163,29 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
 
       {opened && (
         <div
+          ref={lightboxRef}
           className="media-lightbox"
           role="dialog"
           aria-modal="true"
           aria-label={`Screenshot from ${opened.ownerName}`}
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpenIndex(null);
+          }}
+          onTouchStart={(e) => {
+            touchStartX.current = e.changedTouches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(e) => {
+            const startX = touchStartX.current;
+            const endX = e.changedTouches[0]?.clientX;
+            touchStartX.current = null;
+            if (startX === null || endX === undefined || screenshots.length < 2) return;
+            const delta = endX - startX;
+            if (Math.abs(delta) < 48) return;
+            setOpenIndex((index) =>
+              index === null
+                ? null
+                : (index + (delta < 0 ? 1 : -1) + screenshots.length) % screenshots.length,
+            );
           }}
         >
           <div className="lightbox-inner">
@@ -148,7 +199,40 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
             </button>
             {/* Expanded screenshots use `object-fit: contain` (see globals.css)
                 so any text inside the image stays legible — never cropped. */}
-            <img src={opened.mediaUrl} alt={`Screenshot from ${opened.ownerName}`} />
+            <div className="lightbox-image-wrap">
+              {screenshots.length > 1 && (
+                <button
+                  type="button"
+                  className="lightbox-step lightbox-previous"
+                  aria-label="Previous owner screenshot"
+                  onClick={() =>
+                    setOpenIndex((index) =>
+                      index === null ? null : (index - 1 + screenshots.length) % screenshots.length,
+                    )
+                  }
+                >
+                  Previous
+                </button>
+              )}
+              <img
+                src={opened.mediaUrl}
+                alt={`Screenshot shared by ${opened.ownerName}`}
+              />
+              {screenshots.length > 1 && (
+                <button
+                  type="button"
+                  className="lightbox-step lightbox-next"
+                  aria-label="Next owner screenshot"
+                  onClick={() =>
+                    setOpenIndex((index) =>
+                      index === null ? null : (index + 1) % screenshots.length,
+                    )
+                  }
+                >
+                  Next
+                </button>
+              )}
+            </div>
             <p className="small" style={{ color: "#e9efec", margin: 0 }}>
               {opened.quote || `${opened.ownerName}${opened.city ? ` · ${opened.city}` : ""}`}
             </p>

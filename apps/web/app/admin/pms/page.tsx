@@ -13,6 +13,7 @@ export default function PmsWorkspace() {
         "ownerLeads",
         "housekeeping",
         "maintenance",
+        "finance",
       ]}
       defaultTab="enquiries"
     />
