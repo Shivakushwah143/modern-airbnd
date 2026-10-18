@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { PublicBottomNav } from "@/components/PublicBottomNav";
 import Link from "next/link";
 import { siteUrl } from "@/lib/api";
+import { DevAgentation } from "@/components/DevAgentation";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
@@ -70,6 +71,7 @@ export default function RootLayout({
           </div>
         </footer>
         <PublicBottomNav />
+        <DevAgentation />
       </body>
     </html>
   );
