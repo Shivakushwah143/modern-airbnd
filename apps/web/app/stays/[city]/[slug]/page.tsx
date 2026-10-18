@@ -5,6 +5,7 @@ import type { Property, Settings } from "@modern-airbnd/contracts";
 import { api, ApiError, emptySettings, queryString } from "@/lib/api";
 import { PropertyBody } from "@/components/PropertyBody";
 import { RetryButton } from "@/components/RetryButton";
+import { Icon } from "@/components/Icon";
 
 async function loadProperty(
   slug: string,
@@ -136,20 +137,22 @@ export default async function StayDetail({
         <span aria-current="page">{p.name}</span>
       </nav>
 
-      <div className="row-actions" style={{ margin: "14px 0 6px" }}>
+      <div className="row-actions pdp-actions">
         <Link
-          className="button primary"
-          href={`/stays/${city}/${slug}/enquire${
-           queryString({ ...q }) ? `?${queryString({ ...q })}` : ""
-          }`}
-        >
-          Book this stay
-        </Link>
-        <Link
-          className="button secondary"
+          className="pdp-back-action"
           href={`/stays${cityQuery ? `?${cityQuery}` : ""}`}
         >
+          <Icon name="arrow" size={18} />
           Back to {p.location.name} stays
+        </Link>
+        <Link
+          className="button primary pdp-book-action"
+          href={`/stays/${city}/${slug}/enquire${
+            queryString({ ...q }) ? `?${queryString({ ...q })}` : ""
+          }`}
+        >
+          <Icon name="calendar" size={20} />
+          Book this stay
         </Link>
       </div>
 
