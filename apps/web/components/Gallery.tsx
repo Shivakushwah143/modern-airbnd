@@ -9,6 +9,15 @@ export function Gallery({ media, demo }: { media: Media[]; demo: boolean }) {
   const [index, setIndex] = useState(0);
   const start = useRef(0);
   const count = media.length;
+  const previewIndexes = Array.from(
+    { length: Math.min(2, Math.max(count - 1, 0)) },
+    (_, offset) => (index + offset + 1) % count,
+  );
+
+  const move = (offset: number) => {
+    setIndex((current) => (current + offset + count) % count);
+  };
+
   return (
     <>
       <div
@@ -18,8 +27,7 @@ export function Gallery({ media, demo }: { media: Media[]; demo: boolean }) {
         }}
         onTouchEnd={(e) => {
           const d = e.changedTouches[0].clientX - start.current;
-          if (Math.abs(d) > 50 && count)
-            setIndex((i) => (i + (d < 0 ? 1 : -1) + count) % count);
+          if (Math.abs(d) > 50 && count) move(d < 0 ? 1 : -1);
         }}
       >
         <button
@@ -28,39 +36,40 @@ export function Gallery({ media, demo }: { media: Media[]; demo: boolean }) {
           onClick={() => setOpen(true)}
           aria-label="Open full photo gallery"
         >
-          <Photo media={media[index]} demo={demo} priority />
+          <span className="gallery-main-frame" key={media[index]?.id}>
+            <Photo media={media[index]} demo={demo} priority />
+          </span>
         </button>
         {count > 1 && (
           <div className="gallery-thumbs">
-            {media.slice(1, 3).map((m, i) => (
-              <button
-                key={m.id}
-                onClick={() => {
-                  setIndex(i + 1);
-                  setOpen(true);
-                }}
-                aria-label={`View photo ${i + 2}`}
-              >
-                <Photo media={m} />
-              </button>
-            ))}
+            {previewIndexes.map((previewIndex) => {
+              const preview = media[previewIndex];
+              return (
+                <button
+                  key={preview.id}
+                  onClick={() => {
+                    setIndex(previewIndex);
+                    setOpen(true);
+                  }}
+                  aria-label={`View photo ${previewIndex + 1}`}
+                >
+                  <span className="gallery-thumb-frame" key={preview.id}>
+                    <Photo media={preview} />
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
         {count > 0 && (
           <div className="gallery-controls">
-            <button
-              aria-label="Previous photo"
-              onClick={() => setIndex((i) => (i - 1 + count) % count)}
-            >
+            <button aria-label="Previous photo" onClick={() => move(-1)}>
               ‹
             </button>
             <span>
               {index + 1} / {count}
             </span>
-            <button
-              aria-label="Next photo"
-              onClick={() => setIndex((i) => (i + 1) % count)}
-            >
+            <button aria-label="Next photo" onClick={() => move(1)}>
               ›
             </button>
             <button onClick={() => setOpen(true)}>View all photos</button>
@@ -79,23 +88,16 @@ export function Gallery({ media, demo }: { media: Media[]; demo: boolean }) {
           }}
           onTouchEnd={(e) => {
             const d = e.changedTouches[0].clientX - start.current;
-            if (Math.abs(d) > 50 && count)
-              setIndex((i) => (i + (d < 0 ? 1 : -1) + count) % count);
+            if (Math.abs(d) > 50 && count) move(d < 0 ? 1 : -1);
           }}
         >
           <Photo media={media[index]} />
         </div>
         <div className="dialog-actions">
-          <button
-            className="button secondary"
-            onClick={() => setIndex((i) => (i - 1 + count) % count)}
-          >
+          <button className="button secondary" onClick={() => move(-1)}>
             Previous photo
           </button>
-          <button
-            className="button secondary"
-            onClick={() => setIndex((i) => (i + 1) % count)}
-          >
+          <button className="button secondary" onClick={() => move(1)}>
             Next photo
           </button>
         </div>

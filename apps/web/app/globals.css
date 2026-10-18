@@ -717,10 +717,27 @@ small,
 .gallery-main:disabled {
   opacity: 1;
 }
-.gallery-main > img,
-.gallery-thumbs img {
+.gallery-main-frame,
+.gallery-thumb-frame {
+  display: block;
   height: 100%;
   width: 100%;
+  animation: gallery-preview-enter 160ms ease-out both;
+}
+.gallery-main-frame > img,
+.gallery-thumb-frame > img {
+  height: 100%;
+  width: 100%;
+}
+@keyframes gallery-preview-enter {
+  from {
+    opacity: 0.72;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 .gallery-thumbs {
   display: none;
@@ -1498,8 +1515,7 @@ fieldset {
   }
   .enquiry-panel {
     order: 0;
-    position: sticky;
-    top: 24px;
+    position: static;
   }
   .enquiry-panel .search-fields {
     grid-template-columns: 1fr;
@@ -2266,12 +2282,17 @@ fieldset {
   .pdp-remediated .enquiry-panel {
     grid-column: 2;
     grid-row: 1 / span 2;
-    position: sticky;
-    top: 24px;
+    position: static;
   }
   .property-story {
     grid-column: 1;
     grid-row: 2;
+  }
+}
+@media (min-width: 1024px) and (min-height: 800px) {
+  .pdp-remediated .enquiry-panel {
+    position: sticky;
+    top: 24px;
   }
 }
 
@@ -2417,12 +2438,12 @@ p {
   border-radius: 2px;
   margin-bottom: 44px;
 }
-.gallery-main > img,
-.gallery-thumbs img {
+.gallery-main-frame > img,
+.gallery-thumb-frame > img {
   transition: transform 0.25s ease;
 }
-.gallery-main:hover > img,
-.gallery-thumbs button:hover img {
+.gallery-main:hover .gallery-main-frame > img,
+.gallery-thumbs button:hover .gallery-thumb-frame > img {
   transform: scale(1.025);
 }
 .gallery-controls {
