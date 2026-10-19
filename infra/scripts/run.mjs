@@ -9,7 +9,7 @@ const commands={
  'web:build':{args:[next,'build','--webpack'],cwd:'apps/web'},
  'web:dev':{args:[next,'dev','--hostname','0.0.0.0','--port',process.env.WEB_PORT||'3000'],cwd:'apps/web'},
  'web:start':{args:[next,'start','--hostname','0.0.0.0','--port',process.env.WEB_PORT||'3000'],cwd:'apps/web'},
- 'api:dev':{args:['--import','tsx','apps/api/src/server.ts'],cwd:'.'},
+ 'api:dev':{args:['--watch','--import','tsx','apps/api/src/server.ts'],cwd:'.'},
  'test':{args:['node_modules/vitest/vitest.mjs','run'],cwd:'.'},
  'test:e2e':{args:['node_modules/@playwright/test/cli.js','test'],cwd:'.'},
  'db:migrate':{args:['node_modules/prisma/build/index.js','migrate','deploy','--schema=apps/api/prisma/schema.prisma'],cwd:'.'},

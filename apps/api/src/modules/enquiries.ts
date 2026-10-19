@@ -170,9 +170,10 @@ publicEnquiries.post("/enquiries", async (req, res) => {
           guestName: b.guestName,
           phone: b.phone,
           message: b.message,
-          // QA-019: the consent decision is stored with a server-side timestamp.
-          consentAccepted: b.consentAccepted,
-          consentRecordedAt: new Date(),
+          // The compact form omits consent because it has no consent control.
+          // Dedicated forms still submit `true` and receive a server timestamp.
+          consentAccepted: b.consentAccepted ?? false,
+          consentRecordedAt: b.consentAccepted ? new Date() : null,
         },
       });
       const s = await settings();

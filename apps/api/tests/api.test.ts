@@ -564,6 +564,14 @@ describe("API with real PostgreSQL; Cloudinary adapter stubbed", () => {
     expect(ok.status).toBe(201);
     expect(ok.body.data.enquiry.consentAccepted).toBe(true);
     expect(ok.body.data.enquiry.consentRecordedAt).toBeTruthy();
+    const compactEnquiryBody = { ...enquiryBody };
+    delete compactEnquiryBody.consentAccepted;
+    const compact = await request(app)
+      .post("/api/v1/enquiries")
+      .send(compactEnquiryBody);
+    expect(compact.status).toBe(201);
+    expect(compact.body.data.enquiry.consentAccepted).toBe(false);
+    expect(compact.body.data.enquiry.consentRecordedAt).toBeNull();
     // QA-018: the acknowledgement reference verifies without exposing PII.
     const receiptId = ok.body.data.enquiry.id as string;
     const receipt = await request(app).get(`/api/v1/enquiries/${receiptId}/receipt`);

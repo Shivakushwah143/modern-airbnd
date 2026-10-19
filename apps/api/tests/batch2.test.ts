@@ -26,7 +26,9 @@ describe("QA-019 contact-form consent validation", () => {
     guestName: "Guest",
     phone: "+919876543210",
   };
-  it("refuses a guest enquiry without consent", () =>
+  it("accepts a compact guest enquiry when consent is not collected", () =>
+    expect(stayEnquirySchema.parse(enquiry).consentAccepted).toBeUndefined());
+  it("refuses an explicit guest-consent refusal", () =>
     expect(() =>
       stayEnquirySchema.parse({ ...enquiry, consentAccepted: false }),
     ).toThrow());

@@ -97,6 +97,10 @@ export function StayAction({
             <input aria-label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91..." required />
           </>
         )}
+        <p className="muted small">
+          We use your details to respond to this enquiry. See the{" "}
+          <Link href="/privacy">Privacy Notice</Link>.
+        </p>
         {error && <p className="field-error">{error}</p>}
         <button className="button primary" disabled={busy}>
           {busy ? "Saving..." : action.label}

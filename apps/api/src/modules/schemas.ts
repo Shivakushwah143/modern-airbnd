@@ -100,12 +100,16 @@ export const proofSchema = z
   .refine((v) => !v.isVisible || v.verifiedAt !== null, {
     message: "Verify the source before displaying it.",
   });
-/** QA-019: contact forms must record the visitor's consent decision. The
- * timestamp is stamped server-side; the boolean alone never comes back. */
-const consentFields = {
+/** Dedicated contact forms collect affirmative consent. The compact stay form
+ * has no consent control, so its value may be omitted; an explicit refusal is
+ * still rejected. */
+const requiredConsentFields = {
   consentAccepted: z
     .boolean()
     .refine((v) => v, "Please accept the privacy notice to continue."),
+};
+const optionalStayConsentFields = {
+  consentAccepted: requiredConsentFields.consentAccepted.optional(),
 };
 export const stayEnquirySchema = z
   .object({
@@ -117,7 +121,7 @@ export const stayEnquirySchema = z
     guestName: text(120).min(2),
     phone: phone.refine((v) => v.length > 0, "Phone is required."),
     message: text(1000).default(""),
-    ...consentFields,
+    ...optionalStayConsentFields,
   })
   .strict()
   .refine((v) => v.checkOut > v.checkIn, {
@@ -132,7 +136,7 @@ export const ownerLeadSchema = z
     city: text(120).default(""),
     propertyType: text(120).default(""),
     message: text(1000).default(""),
-    ...consentFields,
+    ...requiredConsentFields,
   })
   .strict();
 export const enquiryStatusSchema = z.object({
