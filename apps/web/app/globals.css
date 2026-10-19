@@ -827,6 +827,29 @@ details p {
   box-shadow: none;
   margin-bottom: 18px;
 }
+.search-field-static {
+  cursor: default;
+}
+.availability-result {
+  margin-bottom: 20px;
+}
+.availability-result .availability {
+  margin-bottom: 8px;
+}
+.enquiry-panel .availability-result .availability {
+  margin-bottom: 8px;
+}
+.availability-result p {
+  margin: 0;
+}
+.enquiry-step {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.enquiry-step h3 {
+  margin: 4px 0 14px;
+  font-size: 1.1rem;
+}
 .enquiry-panel .availability {
   margin-bottom: 20px;
 }

@@ -11,6 +11,8 @@ export function Search({
   initial = {},
   action = "/stays",
   compact = false,
+  locationReadOnly = false,
+  submitLabel = "Check availability",
 }: {
   locations: Location[];
   initial?: {
@@ -21,6 +23,9 @@ export function Search({
   };
   action?: string;
   compact?: boolean;
+  /** Use on a property page, where destination is fixed by the listing. */
+  locationReadOnly?: boolean;
+  submitLabel?: string;
 }) {
   const router = useRouter();
   const [location, setLocation] = useState(initial.location || "");
@@ -96,24 +101,34 @@ export function Search({
         id="search"
       >
         <div className="search-fields">
-          <button
-            type="button"
-            className="search-field"
-            onClick={() => locations.length && setModal("location")}
-            disabled={!locations.length}
-          >
-            <Icon name="pin" />
-            <span>
-              <small>Where are you going?</small>
-              <strong>
-                {selectedLocation?.name ||
-                  (locations.length
-                    ? "Choose city"
-                    : "No cities published yet")}
-              </strong>
-            </span>
-            <span className="chevron">v</span>
-          </button>
+          {locationReadOnly ? (
+            <div className="search-field search-field-static">
+              <Icon name="pin" />
+              <span>
+                <small>Destination</small>
+                <strong>{selectedLocation?.name || "This stay's city"}</strong>
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="search-field"
+              onClick={() => locations.length && setModal("location")}
+              disabled={!locations.length}
+            >
+              <Icon name="pin" />
+              <span>
+                <small>Where are you going?</small>
+                <strong>
+                  {selectedLocation?.name ||
+                    (locations.length
+                      ? "Choose city"
+                      : "No cities published yet")}
+                </strong>
+              </span>
+              <span className="chevron">v</span>
+            </button>
+          )}
           <button
             type="button"
             className="search-field"
@@ -153,7 +168,7 @@ export function Search({
           )}
         </div>
         <button className="button primary" disabled={busy}>
-          {busy ? "Checking..." : "Check availability"}
+          {busy ? "Checking..." : submitLabel}
         </button>
         {error && (
           <p className="field-error" role="alert">
