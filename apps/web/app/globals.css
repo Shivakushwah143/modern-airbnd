@@ -2975,9 +2975,9 @@ p {
     overscroll-behavior-x: contain;
     scrollbar-width: none;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: #fbfafff5;
-    border-top: 1px solid #e0e4ee;
-    box-shadow: 0 -12px 34px #101a2f14;
+    background: linear-gradient(135deg, #102f26 0%, var(--primary) 100%);
+    border-top: 1px solid rgb(255 255 255 / 22%);
+    box-shadow: 0 -12px 34px #07151f38;
     backdrop-filter: blur(14px);
     transition: transform 350ms ease-out, opacity 350ms ease-out;
   }
@@ -2998,7 +2998,7 @@ p {
     justify-content: center;
     gap: 4px;
     border-radius: 12px;
-    color: #343947;
+    color: #eef5f0;
     font-size: 0.78rem;
     font-weight: 750;
   }
@@ -3006,8 +3006,9 @@ p {
     white-space: nowrap;
   }
   .public-bottom-nav a[aria-current="page"] {
-    color: #101a2f;
-    background: #eef2fb;
+    color: var(--primary);
+    background: #fff;
+    box-shadow: 0 3px 10px #06172230;
   }
 }
 
@@ -4829,6 +4830,30 @@ header[data-nav-mode="owner"] .brand strong {
 
   .admin-main .stat-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Keep the active mobile-tab icon aligned with its label and brand surface. */
+@media (max-width: 767px) {
+  .public-bottom-nav a > svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.7;
+  }
+  .public-bottom-nav a[aria-current="page"] {
+    color: #fff;
+    background: rgb(255 255 255 / 13%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+  }
+  .public-bottom-nav a[aria-current="page"] > svg {
+    box-sizing: content-box;
+    width: 18px;
+    height: 18px;
+    padding: 5px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--primary);
+    stroke-width: 2;
   }
 }
 
