@@ -2,7 +2,6 @@
 
 import Link, { useLinkStatus } from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { LoadingSpinner } from "./LoadingSpinner";
 
 type NavigationLinkProps = ComponentProps<typeof Link> & {
   children: ReactNode;
@@ -12,11 +11,13 @@ type NavigationLinkProps = ComponentProps<typeof Link> & {
 function PendingHint() {
   const { pending } = useLinkStatus();
   return pending ? (
-    <LoadingSpinner className="navigation-link-spinner" label="Opening page" />
+    <span className="navigation-link-pending sr-only" role="status">
+      Opening page
+    </span>
   ) : null;
 }
 
-/** Native Next Link behavior with an in-link pending hint for slow transitions. */
+/** Native Next Link behavior with an accessible pending marker for slow transitions. */
 export function NavigationLink({
   children,
   className,

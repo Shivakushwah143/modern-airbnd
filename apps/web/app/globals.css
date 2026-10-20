@@ -1568,12 +1568,18 @@ fieldset {
 .navigation-link {
   position: relative;
 }
-.navigation-link-spinner {
-  margin-left: 0.45rem;
-  vertical-align: -0.12em;
-  width: 0.8em;
-  height: 0.8em;
-  border-width: 1.5px;
+@keyframes nav-text-shimmer {
+  to { background-position: -220% 0; }
+}
+@keyframes nav-icon-shimmer {
+  0%, 100% {
+    opacity: 0.62;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgb(255 255 255 / 70%));
+  }
 }
 .loading-overlay {
   position: absolute;
@@ -3004,6 +3010,19 @@ p {
   }
   .public-bottom-nav a span {
     white-space: nowrap;
+  }
+  .public-bottom-nav a:has(.navigation-link-pending) > span:not(.navigation-link-pending) {
+    color: transparent;
+    background: linear-gradient(100deg, rgb(238 245 240 / 62%) 0%, #fff 46%, rgb(238 245 240 / 62%) 92%);
+    background-size: 220% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: nav-text-shimmer 950ms linear infinite;
+    will-change: background-position;
+  }
+  .public-bottom-nav a:has(.navigation-link-pending) > svg {
+    animation: nav-icon-shimmer 950ms ease-in-out infinite;
+    will-change: opacity, filter;
   }
   .public-bottom-nav a[aria-current="page"] {
     color: var(--primary);
@@ -4866,5 +4885,10 @@ header[data-nav-mode="owner"] .brand strong {
   }
   .public-bottom-nav {
     transition: none;
+  }
+  .public-bottom-nav a:has(.navigation-link-pending) > span:not(.navigation-link-pending),
+  .public-bottom-nav a:has(.navigation-link-pending) > svg {
+    animation: none;
+    will-change: auto;
   }
 }
