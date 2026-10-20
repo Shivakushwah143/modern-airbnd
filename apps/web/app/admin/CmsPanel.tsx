@@ -38,9 +38,12 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
   );
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function load() {
-    setLoading(true);
+    if (loading) setLoading(true);
+    else setRefreshing(true);
     try {
       setPages(await api<PageRow[]>("/admin/cms/pages"));
       setLoadError("");
@@ -48,6 +51,7 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
       setLoadError("Content pages could not be loaded. Please retry.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
   useEffect(() => {
@@ -55,13 +59,23 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
   }, []);
 
   async function toggle(row: PageRow, isPublished: boolean) {
-    await run(async () => {
+    await execute(async () => {
       await api(`/admin/cms/pages/${row.id}`, {
         method: "PATCH",
         body: JSON.stringify({ isPublished }),
       });
       await load();
     }, "Visibility updated.");
+  }
+
+  async function execute(fn: () => Promise<void>, success: string) {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await run(fn, success);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -83,9 +97,18 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
         details, about text and legal copy stay in Business &amp; contact.
       </p>
       {loadError && (
-        <p className="notice error" role="alert">
-          {loadError}
-        </p>
+        <div className="notice error" role="alert">
+          <p>{loadError}</p>
+          <AsyncButton
+            type="button"
+            className="button secondary"
+            busy={loading || refreshing}
+            busyLabel="Retrying…"
+            onClick={() => void load()}
+          >
+            Retry
+          </AsyncButton>
+        </div>
       )}
       {loading ? <TableSkeleton rows={5} /> : <CmsEditor />}
     </>
@@ -99,7 +122,7 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
             onSubmit={(e: FormEvent) => {
               e.preventDefault();
               const { id, ...body } = draft;
-              void run(async () => {
+              void execute(async () => {
                 await api(id ? `/admin/cms/pages/${id}` : "/admin/cms/pages", {
                   method: id ? "PATCH" : "POST",
                   body: JSON.stringify(body),
@@ -178,7 +201,12 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
               Published (visible to visitors)
             </label>
             <div className="row-actions">
-              <AsyncButton type="submit" className="button primary">
+              <AsyncButton
+                type="submit"
+                className="button primary"
+                busy={saving}
+                busyLabel="Saving page…"
+              >
                 Save page
               </AsyncButton>
               <button
@@ -224,6 +252,7 @@ export function CmsPanel({ run, ask }: { run: Run; ask: Ask }) {
                 <input
                   type="checkbox"
                   checked={p.isPublished}
+                  disabled={saving}
                   onChange={(e) => void toggle(p, e.target.checked)}
                 />
                 Published

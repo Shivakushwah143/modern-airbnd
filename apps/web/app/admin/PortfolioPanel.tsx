@@ -170,6 +170,7 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [teamDraft, setTeamDraft] = useState<
     (typeof emptyTeam & { id?: string }) | null
@@ -182,7 +183,8 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
   >(null);
 
   async function load() {
-    setLoading(true);
+    if (loading) setLoading(true);
+    else setRefreshing(true);
     try {
       const [t, ts, c, p] = await Promise.all([
         api<TeamRow[]>("/admin/portfolio/team"),
@@ -199,6 +201,7 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
       setLoadError("The portfolio could not be loaded. Please retry.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
   useEffect(() => {
@@ -236,7 +239,7 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
         </div>
         <AsyncButton
           className="button secondary"
-          busy={loading}
+          busy={loading || refreshing}
           busyLabel="Refreshing…"
           onClick={() => void load()}
         >
@@ -248,9 +251,18 @@ export function PortfolioPanel({ run, ask }: { run: Run; ask: Ask }) {
         videos, and published case studies shown on the public portfolio pages.
       </p>
       {loadError && (
-        <p className="notice error" role="alert">
-          {loadError}
-        </p>
+        <div className="notice error" role="alert">
+          <p>{loadError}</p>
+          <AsyncButton
+            type="button"
+            className="button secondary"
+            busy={loading || refreshing}
+            busyLabel="Retrying…"
+            onClick={() => void load()}
+          >
+            Retry
+          </AsyncButton>
+        </div>
       )}
       {loading ? <TableSkeleton rows={5} /> : <PortfolioEditor />}
     </>

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type {
   Property,
   Location,
@@ -13,6 +13,8 @@ import { Dialog } from "@/components/Dialog";
 import { Icon } from "@/components/Icon";
 import { Photo } from "@/components/Photo";
 import { PropertyBody } from "@/components/PropertyBody";
+import { AsyncButton } from "@/components/AsyncButton";
+import { WorkspaceSkeleton } from "@/components/Skeletons";
 import { PortfolioPanel } from "./PortfolioPanel";
 import { CmsPanel } from "./CmsPanel";
 type Tab =
@@ -201,6 +203,8 @@ export function AdminShell({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
+  const [sessionAttempt, setSessionAttempt] = useState(0);
+  const operationInFlight = useRef(false);
   const [tab, setTab] = useState<Tab>(
     tabs.includes(defaultTab) ? defaultTab : tabs[0] || "dashboard",
   ),
@@ -337,10 +341,11 @@ export function AdminShell({
     setMaintenance(m);
   }
   useEffect(() => {
+    setAuth(null);
     api("/admin/auth/session")
-      .then(() => {
+      .then(async () => {
+        await refresh();
         setAuth(true);
-        return refresh();
       })
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) setAuth(false);
@@ -349,7 +354,7 @@ export function AdminShell({
           setError("The owner workspace could not be reached. Please retry.");
         }
       });
-  }, []);
+  }, [sessionAttempt]);
   useEffect(() => {
     if (editing === null || JSON.stringify(draft) === savedDraftSnapshot) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -387,6 +392,8 @@ export function AdminShell({
     };
   }, [editing, draft, savedDraftSnapshot]);
   async function run(fn: () => Promise<void>, success = "Saved successfully.") {
+    if (operationInFlight.current) return;
+    operationInFlight.current = true;
     setBusy(true);
     setError("");
     setMsgDetails([]);
@@ -400,6 +407,7 @@ export function AdminShell({
       if (e instanceof ApiError && Array.isArray(e.details))
         setMsgDetails(e.details);
     } finally {
+      operationInFlight.current = false;
       setBusy(false);
     }
   }
@@ -513,7 +521,8 @@ export function AdminShell({
   }
   if (auth === null)
     return (
-      <div className="container section">
+      <div className="admin-loading-shell">
+        <WorkspaceSkeleton />
         <p>Opening owner workspace…</p>
       </div>
     );
@@ -558,9 +567,9 @@ export function AdminShell({
               {error}
             </p>
           )}
-          <button className="button primary" disabled={busy}>
+          <AsyncButton busy={busy} busyLabel="Signing in…">
             {busy ? "Signing in…" : "Sign in"}
-          </button>
+          </AsyncButton>
         </form>
       </div>
     );
