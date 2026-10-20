@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { Property, Availability } from "@modern-airbnd/contracts";
 import { Icon } from "./Icon";
 import { Photo } from "./Photo";
+import { NavigationLink } from "./NavigationLink";
 
 export function AvailabilityBadge({ value }: { value: Availability }) {
   const labels = {
@@ -35,10 +35,16 @@ export function PropertyCard({
     <article
       className={`property-card ${p.availability.status === "UNAVAILABLE" ? "unavailable-card" : ""}`}
     >
-      <Link className="card-image" href={href} tabIndex={-1} aria-hidden="true">
+      <NavigationLink
+        className="card-image"
+        href={href}
+        tabIndex={-1}
+        aria-hidden="true"
+        showPending={false}
+      >
         <Photo media={p.media[0]} demo={p.isDemo} />
         {p.isDemo && <span className="demo-tag">Demo stay</span>}
-      </Link>
+      </NavigationLink>
       <div className="card-content">
         <div className="eyebrow">
           <Icon name="pin" size={14} />
@@ -46,7 +52,7 @@ export function PropertyCard({
           {p.area ? ` / ${p.location.name}` : ""}
         </div>
         <h3>
-          <Link href={href}>{p.name}</Link>
+          <NavigationLink href={href}>{p.name}</NavigationLink>
         </h3>
         <p className="muted small card-summary">
           {p.shortDescription || p.propertyType}
@@ -62,9 +68,9 @@ export function PropertyCard({
         )}
         <div className="card-foot">
           <AvailabilityBadge value={p.availability} />
-          <Link className="card-link" href={href}>
+          <NavigationLink className="card-link" href={href}>
             View property
-          </Link>
+          </NavigationLink>
         </div>
       </div>
     </article>

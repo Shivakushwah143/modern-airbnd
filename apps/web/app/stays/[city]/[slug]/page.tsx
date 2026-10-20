@@ -6,6 +6,7 @@ import { api, ApiError, emptySettings, queryString } from "@/lib/api";
 import { PropertyBody } from "@/components/PropertyBody";
 import { RetryButton } from "@/components/RetryButton";
 import { Icon } from "@/components/Icon";
+import { NavigationLink } from "@/components/NavigationLink";
 
 async function loadProperty(
   slug: string,
@@ -138,14 +139,14 @@ export default async function StayDetail({
       </nav>
 
       <div className="row-actions pdp-actions">
-        <Link
+        <NavigationLink
           className="pdp-back-action"
           href={`/stays${cityQuery ? `?${cityQuery}` : ""}`}
         >
           <Icon name="arrow" size={18} />
           Back to {p.location.name} stays
-        </Link>
-        <Link
+        </NavigationLink>
+        <NavigationLink
           className="button primary pdp-book-action"
           href={`/stays/${city}/${slug}/enquire${
             queryString({ ...q }) ? `?${queryString({ ...q })}` : ""
@@ -153,7 +154,7 @@ export default async function StayDetail({
         >
           <Icon name="calendar" size={20} />
           Book this stay
-        </Link>
+        </NavigationLink>
       </div>
 
       {p.isDemo && (

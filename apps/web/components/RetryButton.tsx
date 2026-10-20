@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { AsyncButton } from "./AsyncButton";
 
 export function RetryButton({
   label = "Retry",
@@ -12,13 +13,14 @@ export function RetryButton({
   const router = useRouter();
   const [busy, startTransition] = useTransition();
   return (
-    <button
+    <AsyncButton
       type="button"
       className={className}
-      disabled={busy}
+      busy={busy}
+      busyLabel="Retrying…"
       onClick={() => startTransition(() => router.refresh())}
     >
-      {busy ? "Retrying..." : label}
-    </button>
+      {label}
+    </AsyncButton>
   );
 }

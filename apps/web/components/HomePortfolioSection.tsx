@@ -19,7 +19,10 @@ export async function HomePortfolioSection() {
   const caseStudies = portfolio?.caseStudies.slice(0, 3) ?? [];
 
   return (
-    <section className="landing-section owner-portfolio-band" aria-labelledby="owner-band-title">
+    <section
+      className="landing-section owner-portfolio-band"
+      aria-labelledby="owner-band-title"
+    >
       <div className="container">
         <div className="landing-section-head">
           <div>
@@ -27,23 +30,98 @@ export async function HomePortfolioSection() {
             <h2 id="owner-band-title">
               We run stays across {portfolio?.managedCount ?? 0}{" "}
               {(portfolio?.managedCount ?? 0) === 1 ? "property" : "properties"}
-              {cities.length ? ` in ${cities.length} ${cities.length === 1 ? "city" : "cities"}` : ""}.
+              {cities.length
+                ? ` in ${cities.length} ${cities.length === 1 ? "city" : "cities"}`
+                : ""}
+              .
             </h2>
           </div>
-          <Link href="/portfolio" className="text-link">View the full portfolio</Link>
+          <Link href="/portfolio" className="text-link">
+            View the full portfolio
+          </Link>
         </div>
         {portfolio === null ? (
-          <div className="notice error" role="alert"><p>The portfolio service is unavailable right now.</p><RetryButton label="Retry portfolio" /></div>
+          <div className="notice error" role="alert">
+            <p>The portfolio service is unavailable right now.</p>
+            <RetryButton label="Retry portfolio" />
+          </div>
         ) : (
           <>
-            {cities.length > 0 && <div className="location-grid">{cities.map((city) => <Link key={city.slug} className="location-tile" href={`/portfolio/cities/${city.slug}`}><span className="location-number">{city.count} {city.count === 1 ? "stay" : "stays"}</span><p className="eyebrow"><CityIcon slug={city.slug} size={14} /> {city.state || "Managed city"}</p><h3>{city.name}</h3><span>View managed properties</span></Link>)}</div>}
-            {caseStudies.length > 0 && <div className="case-grid">{caseStudies.map((item) => <CaseStudyCard key={item.id} item={item} />)}</div>}
+            {cities.length > 0 && (
+              <div className="location-grid">
+                {cities.map((city) => (
+                  <Link
+                    key={city.slug}
+                    className="location-tile"
+                    href={`/portfolio/cities/${city.slug}`}
+                  >
+                    <span className="location-number">
+                      {city.count} {city.count === 1 ? "stay" : "stays"}
+                    </span>
+                    <p className="eyebrow">
+                      <CityIcon slug={city.slug} size={14} />{" "}
+                      {city.state || "Managed city"}
+                    </p>
+                    <h3>{city.name}</h3>
+                    <span>View managed properties</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+            {caseStudies.length > 0 && (
+              <div className="case-grid">
+                {caseStudies.map((item) => (
+                  <CaseStudyCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
             <div className="landing-owner-split">
-              <div className="landing-owner-services"><p className="eyebrow">Management services</p><h3>Listings, availability, guests and on-ground operations.</h3><p className="muted">Owners hand over day-to-day operations; team keeps listings honest and properties cared for.</p><Link className="button secondary" href="/services">View owner services</Link></div>
-              {team.length > 0 && <div><p className="eyebrow">Management team</p><div className="team-grid">{team.map((member) => <TeamCard key={member.id} member={member} />)}</div></div>}
-              {testimonials.length > 0 && <div><p className="eyebrow">Owner voices · genuine media</p><div className="testimonial-grid">{testimonials.map((item) => <TestimonialCard key={item.id} item={item} />)}</div></div>}
+              <div className="landing-owner-services">
+                <p className="eyebrow">Management services</p>
+                <h3>
+                  Listings, availability, guests and on-ground operations.
+                </h3>
+                <p className="muted">
+                  Owners hand over day-to-day operations; team keeps listings
+                  honest and properties cared for.
+                </p>
+                <Link className="button secondary" href="/services">
+                  View owner services
+                </Link>
+              </div>
+              {team.length > 0 && (
+                <div>
+                  <p className="eyebrow">Management team</p>
+                  <div className="team-grid">
+                    {team.map((member) => (
+                      <TeamCard key={member.id} member={member} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {testimonials.length > 0 && (
+                <div>
+                  <p className="eyebrow">Owner voices · genuine media</p>
+                  <div className="testimonial-grid">
+                    {testimonials.map((item) => (
+                      <TestimonialCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            {!cities.length && !team.length && !testimonials.length && <div className="empty-state"><h3>The portfolio is being published.</h3><p>City-wise listings, team profiles and owner media go live as approved.</p><Link className="button primary" href="/owners">List your property</Link></div>}
+            {!cities.length && !team.length && !testimonials.length && (
+              <div className="empty-state">
+                <h3>The portfolio is being published.</h3>
+                <p>
+                  City-wise listings, team profiles and owner media go live as
+                  approved.
+                </p>
+                <Link className="button primary" href="/owners">
+                  List your property
+                </Link>
+              </div>
+            )}
           </>
         )}
       </div>

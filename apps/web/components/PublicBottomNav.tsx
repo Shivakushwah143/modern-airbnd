@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icon";
+import { NavigationLink } from "./NavigationLink";
 import { BOTTOM_LINKS, isNavActive, navMode } from "@/lib/nav";
 
 export function PublicBottomNav() {
@@ -23,14 +23,14 @@ export function PublicBottomNav() {
       data-nav-mode={mode}
     >
       {links.map((link) => (
-        <Link
+        <NavigationLink
           key={link.href}
           href={link.href}
           aria-current={isNavActive(pathname, link.href) ? "page" : undefined}
         >
           <Icon name={link.icon} />
           <span>{link.label}</span>
-        </Link>
+        </NavigationLink>
       ))}
     </nav>
   );

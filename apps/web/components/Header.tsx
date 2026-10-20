@@ -1,9 +1,9 @@
 "use client";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
+import { NavigationLink } from "./NavigationLink";
 import {
   NAV_LINKS,
   headerCtas,
@@ -25,17 +25,17 @@ export function Header() {
       data-nav-mode={mode}
     >
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="Modern Stayz home">
+        <NavigationLink href="/" className="brand" aria-label="Modern Stayz home" showPending={false}>
           <span className="brand-mark">
             <Icon size={25} />
           </span>
           <span>
             Modern <strong>Stayz</strong>
           </span>
-        </Link>
+        </NavigationLink>
         <nav className="desktop-nav" aria-label="Main navigation">
           {links.map((link) => (
-            <Link
+            <NavigationLink
               key={link.href}
               href={link.href}
               aria-current={
@@ -43,26 +43,26 @@ export function Header() {
               }
             >
               {link.label}
-            </Link>
+            </NavigationLink>
           ))}
         </nav>
         <div className="header-ctas">
           {ctas.map((cta, index) => (
-            <Link
+            <NavigationLink
               key={cta.href}
               className={`button ${index === 0 ? "primary" : "secondary"} header-contact`}
               href={cta.href}
             >
               <Icon name={cta.icon} size={18} />
               {cta.label}
-            </Link>
+            </NavigationLink>
           ))}
         </div>
         {publicHeader && (
-          <Link className="header-quick-contact" href={ctas[0].href}>
+          <NavigationLink className="header-quick-contact" href={ctas[0].href}>
             <Icon name={ctas[0].icon} size={17} />
             <span>{ctas[0].label}</span>
-          </Link>
+          </NavigationLink>
         )}
         <button
           className="icon-btn mobile-menu"
@@ -85,7 +85,7 @@ export function Header() {
       >
         <nav className="mobile-links" aria-label="Main navigation">
           {links.map((link) => (
-            <Link
+            <NavigationLink
               key={link.href}
               href={link.href}
               aria-current={
@@ -95,13 +95,13 @@ export function Header() {
             >
               <Icon name={link.icon} size={18} />
               {link.label}
-            </Link>
+            </NavigationLink>
           ))}
         </nav>
         {publicHeader && (
           <div className="mobile-cta-row">
             {ctas.map((cta, index) => (
-              <Link
+              <NavigationLink
                 key={cta.href}
                 className={`button ${index === 0 ? "primary" : "secondary"}`}
                 href={cta.href}
@@ -109,7 +109,7 @@ export function Header() {
               >
                 <Icon name={cta.icon} size={18} />
                 {cta.label}
-              </Link>
+              </NavigationLink>
             ))}
           </div>
         )}

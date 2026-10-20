@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { api } from "@/lib/api";
+import { AsyncButton } from "@/components/AsyncButton";
 
 export function OwnerLeadForm() {
   const [form, setForm] = useState({
@@ -63,7 +64,9 @@ export function OwnerLeadForm() {
             {label}
             <input
               required={required}
-              type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
+              type={
+                key === "email" ? "email" : key === "phone" ? "tel" : "text"
+              }
               autoComplete={
                 key === "name"
                   ? "name"
@@ -101,11 +104,19 @@ export function OwnerLeadForm() {
         enquiry and process my details as described in the{" "}
         <a href="/privacy">Privacy Notice</a>.
       </label>
-      {error && <p className="field-error" role="alert">{error}</p>}
-      {status && <p className="notice success" role="status">{status}</p>}
-      <button className="button primary" disabled={busy}>
-        {busy ? "Saving..." : "Submit property lead"}
-      </button>
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
+      {status && (
+        <p className="notice success" role="status">
+          {status}
+        </p>
+      )}
+      <AsyncButton busy={busy} busyLabel="Saving lead…">
+        Submit property lead
+      </AsyncButton>
     </form>
   );
 }

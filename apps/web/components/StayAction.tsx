@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import type { Availability } from "@modern-airbnd/contracts";
 import { api } from "@/lib/api";
 import { stayAction } from "@/lib/cta";
+import { AsyncButton } from "./AsyncButton";
 export function StayAction({
   status,
   propertyId,
@@ -63,38 +64,90 @@ export function StayAction({
   }
   if (action.kind === "whatsapp")
     return (
-      <form className={mobile ? "mobile-sticky enquiry-mini" : "desktop-enquiry enquiry-form"} onSubmit={submit}>
+      <form
+        className={
+          mobile ? "mobile-sticky enquiry-mini" : "desktop-enquiry enquiry-form"
+        }
+        onSubmit={submit}
+      >
         {!mobile && (
           <>
             <div className="form-grid">
               <label>
                 Adults
-                <input type="number" min="1" max={maxGuests} value={adults} onChange={(e) => setAdults(Number(e.target.value))} required />
+                <input
+                  type="number"
+                  min="1"
+                  max={maxGuests}
+                  value={adults}
+                  onChange={(e) => setAdults(Number(e.target.value))}
+                  required
+                />
               </label>
               <label>
                 Children
-                <input type="number" min="0" max={maxGuests} value={children} onChange={(e) => setChildren(Number(e.target.value))} />
+                <input
+                  type="number"
+                  min="0"
+                  max={maxGuests}
+                  value={children}
+                  onChange={(e) => setChildren(Number(e.target.value))}
+                />
               </label>
             </div>
             <label>
               Guest name
-              <input value={guestName} onChange={(e) => setGuestName(e.target.value)} required maxLength={120} />
+              <input
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                required
+                maxLength={120}
+              />
             </label>
             <label>
               Phone
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91..." required />
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91..."
+                required
+              />
             </label>
             <label>
               Message (optional)
-              <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} />
+              <textarea
+                rows={3}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={1000}
+              />
             </label>
           </>
         )}
         {mobile && (
           <>
-            <input aria-label="Adults" type="number" min="1" max={maxGuests} value={adults} onChange={(e) => setAdults(Number(e.target.value))} />
-            <input aria-label="Name" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Name" required />
-            <input aria-label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91..." required />
+            <input
+              aria-label="Adults"
+              type="number"
+              min="1"
+              max={maxGuests}
+              value={adults}
+              onChange={(e) => setAdults(Number(e.target.value))}
+            />
+            <input
+              aria-label="Name"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              placeholder="Name"
+              required
+            />
+            <input
+              aria-label="Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91..."
+              required
+            />
           </>
         )}
         <p className="muted small">
@@ -102,19 +155,19 @@ export function StayAction({
           <Link href="/privacy">Privacy Notice</Link>.
         </p>
         {error && <p className="field-error">{error}</p>}
-        <button className="button primary" disabled={busy}>
-          {busy ? "Saving..." : action.label}
-        </button>
+        <AsyncButton busy={busy} busyLabel="Sending enquiry…">
+          {action.label}
+        </AsyncButton>
       </form>
     );
   return (
     <div className={mobile ? "mobile-sticky" : "desktop-enquiry"}>
-      <button
+      <AsyncButton
         className="button primary"
         onClick={action.kind === "retry" ? () => router.refresh() : openDates}
       >
         {action.label}
-      </button>
+      </AsyncButton>
       {status === "UNKNOWN" && (
         <Link href="/contact" className="text-link">
           Contact Us

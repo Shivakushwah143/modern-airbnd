@@ -5,6 +5,7 @@ import type { Location } from "@modern-airbnd/contracts";
 import { DateRange } from "./DateRange";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
+import { AsyncButton } from "./AsyncButton";
 
 export function Search({
   locations,
@@ -35,7 +36,9 @@ export function Search({
     const n = Number(initial.guests);
     return Number.isInteger(n) && n >= 1 && n <= 12 ? n : 2;
   });
-  const [modal, setModal] = useState<"dates" | "location" | null>(null);
+  const [modal, setModal] = useState<"dates" | "location" | "guests" | null>(
+    null,
+  );
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
   const [locationFilter, setLocationFilter] = useState("");
@@ -87,11 +90,25 @@ export function Search({
             : `/stays${suffix ? `?${suffix}` : ""}`
           : `${action}${suffix ? `?${suffix}` : ""}`;
       router.push(target);
-      router.refresh();
     });
   }
 
   const selectedLocation = locations.find((l) => l.slug === location);
+  const datePreview = (date: string) =>
+    new Intl.DateTimeFormat("en-IN", {
+      day: "numeric",
+      month: "short",
+      timeZone: "Asia/Kolkata",
+    }).format(new Date(`${date}T00:00:00+05:30`));
+  const tripPreview = [
+    selectedLocation?.name || "Any destination",
+    start
+      ? end
+        ? `${datePreview(start)} – ${datePreview(end)}`
+        : `${datePreview(start)} · choose check-out`
+      : "Dates not selected",
+    `${guests} ${guests === 1 ? "guest" : "guests"}`,
+  ];
 
   return (
     <>
@@ -137,12 +154,19 @@ export function Search({
             <Icon name="calendar" />
             <span>
               <small>Dates</small>
-              <strong>{start && end ? `${start} to ${end}` : "Add dates"}</strong>
+              <strong>
+                {start && end ? `${start} to ${end}` : "Add dates"}
+              </strong>
             </span>
             <span className="chevron">v</span>
           </button>
           {!compact && (
-            <div className="search-field guest-stepper">
+            <button
+              type="button"
+              className="search-field guest-stepper"
+              onClick={() => setModal("guests")}
+              aria-haspopup="dialog"
+            >
               <Icon name="home" />
               <span>
                 <small>Guests</small>
@@ -150,26 +174,20 @@ export function Search({
                   {guests} {guests === 1 ? "guest" : "guests"}
                 </strong>
               </span>
-              <button
-                type="button"
-                aria-label="Remove guest"
-                onClick={() => setGuests((v) => Math.max(1, v - 1))}
-              >
-                -
-              </button>
-              <button
-                type="button"
-                aria-label="Add guest"
-                onClick={() => setGuests((v) => Math.min(12, v + 1))}
-              >
-                +
-              </button>
-            </div>
+              <span className="chevron">v</span>
+            </button>
           )}
         </div>
-        <button className="button primary" disabled={busy}>
-          {busy ? "Checking..." : submitLabel}
-        </button>
+        <div className="search-selection-preview" aria-live="polite">
+          <Icon name="check" size={16} />
+          <span>
+            <small>Your trip</small>
+            <strong>{tripPreview.join(" · ")}</strong>
+          </span>
+        </div>
+        <AsyncButton busy={busy} busyLabel="Finding stays…">
+          {submitLabel}
+        </AsyncButton>
         {error && (
           <p className="field-error" role="alert">
             {error}
@@ -272,6 +290,46 @@ export function Search({
             }}
           >
             Apply dates
+          </button>
+        </div>
+      </Dialog>
+      <Dialog
+        open={modal === "guests"}
+        onClose={() => setModal(null)}
+        title="How many guests?"
+      >
+        <div className="guest-picker">
+          <div>
+            <strong>Guests</strong>
+            <p className="muted small">Choose up to 12 guests.</p>
+          </div>
+          <div className="guest-picker-controls" aria-live="polite">
+            <button
+              type="button"
+              className="button secondary"
+              aria-label="Remove guest"
+              disabled={guests <= 1}
+              onClick={() => setGuests((value) => Math.max(1, value - 1))}
+            >
+              −
+            </button>
+            <output aria-label={`${guests} ${guests === 1 ? "guest" : "guests"}`}>
+              {guests}
+            </output>
+            <button
+              type="button"
+              className="button secondary"
+              aria-label="Add guest"
+              disabled={guests >= 12}
+              onClick={() => setGuests((value) => Math.min(12, value + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="dialog-actions">
+          <button className="button primary" type="button" onClick={() => setModal(null)}>
+            Done
           </button>
         </div>
       </Dialog>

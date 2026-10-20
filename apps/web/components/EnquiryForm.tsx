@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { AsyncButton } from "./AsyncButton";
 
 type EnquiryCreated = {
   enquiry: { id: string };
@@ -173,8 +174,8 @@ export function EnquiryForm({
         />
         {/* QA-019: placeholder for the business-approved copy; links to the
             site's own Privacy Notice instead of inventing legal terms. */}
-        I agree that the Modern Stayz team may contact me about this enquiry
-        and process my details as described in the{" "}
+        I agree that the Modern Stayz team may contact me about this enquiry and
+        process my details as described in the{" "}
         <a href="/privacy">Privacy Notice</a>.
       </label>
       {error && (
@@ -186,9 +187,9 @@ export function EnquiryForm({
         Sending an enquiry does not reserve the stay. The team confirms
         availability with you directly.
       </p>
-      <button className="button primary" disabled={busy}>
-        {busy ? "Sending enquiry..." : "Send booking enquiry"}
-      </button>
+      <AsyncButton busy={busy} busyLabel="Sending enquiry…">
+        Send booking enquiry
+      </AsyncButton>
     </form>
   );
 }
