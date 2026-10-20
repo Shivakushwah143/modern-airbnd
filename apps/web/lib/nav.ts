@@ -56,11 +56,10 @@ export const NAV_LINKS: Record<NavMode, NavLink[]> = {
   ],
   owner: [
     { href: "/portfolio", label: "Our Portfolio", icon: "home" },
-    { href: "/services", label: "Services", icon: "shield" },
-    { href: "/portfolio/team", label: "Our Team", icon: "home" },
-    { href: "/stays", label: "Live stays", icon: "bed" },
-    { href: "/owners", label: "List your property", icon: "plus" },
-    { href: "/contact", label: "Contact", icon: "chat" },
+    { href: "/portfolio#properties", label: "Properties", icon: "bed" },
+    { href: "/portfolio#services", label: "Services", icon: "shield" },
+    { href: "/portfolio#team", label: "Our Team", icon: "users" },
+    { href: "/portfolio#testimonials", label: "Testimonials", icon: "chat" },
   ],
   admin: [
     { href: "/admin", label: "Overview", icon: "home" },
@@ -87,14 +86,17 @@ export const BOTTOM_LINKS: Record<NavMode, NavLink[]> = {
   owner: [
     { href: "/", label: "Home", icon: "home" },
     { href: "/portfolio", label: "Portfolio", icon: "photo" },
-    { href: "/services", label: "Services", icon: "shield" },
+    { href: "/portfolio#services", label: "Services", icon: "shield" },
     { href: "/contact", label: "Contact", icon: "chat" },
   ],
   admin: [],
 };
 
 /** Exact match for "/", prefix match otherwise. */
-export function isNavActive(pathname: string, href: string): boolean {
+export function isNavActive(pathname: string, href: string, hash = ""): boolean {
+  const [path, anchor] = href.split("#");
+  if (anchor) return pathname === path && hash === `#${anchor}`;
+  if (pathname === "/portfolio" && href === "/portfolio" && hash) return false;
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }

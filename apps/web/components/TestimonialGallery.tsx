@@ -12,7 +12,13 @@ type Filter = "ALL" | "IMAGE" | "VIDEO";
  * - videos play only on explicit user action, with captions track and an
  *   optional transcript.
  */
-export function TestimonialGallery({ items }: { items: Testimonial[] }) {
+export function TestimonialGallery({
+  items,
+  demo = false,
+}: {
+  items: Testimonial[];
+  demo?: boolean;
+}) {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -27,13 +33,17 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
   useEffect(() => {
     if (openIndex === null) return;
     const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpenIndex(null);
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         setOpenIndex((index) =>
-          index === null ? null : (index - 1 + screenshots.length) % screenshots.length,
+          index === null
+            ? null
+            : (index - 1 + screenshots.length) % screenshots.length,
         );
       }
       if (e.key === "ArrowRight") {
@@ -61,15 +71,20 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
       previous?.focus?.();
     };
   }, [openIndex, screenshots.length]);
 
-  const opened = openIndex === null ? null : screenshots[openIndex] ?? null;
+  const opened = openIndex === null ? null : (screenshots[openIndex] ?? null);
 
   return (
     <>
-      <div className="testimonial-filters" role="group" aria-label="Filter testimonials by media type">
+      <div
+        className="testimonial-filters"
+        role="group"
+        aria-label="Filter testimonials by media type"
+      >
         {(
           [
             ["ALL", `All (${items.length})`],
@@ -77,7 +92,10 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
               "IMAGE",
               `Screenshots (${items.filter((i) => i.mediaType === "IMAGE").length})`,
             ],
-            ["VIDEO", `Videos (${items.filter((i) => i.mediaType === "VIDEO").length})`],
+            [
+              "VIDEO",
+              `Videos (${items.filter((i) => i.mediaType === "VIDEO").length})`,
+            ],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -96,14 +114,32 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
       </div>
 
       <div className="testimonial-grid">
+        {visible.length === 0 && (
+          <p className="testimonial-filter-empty" role="status">
+            No {filter === "VIDEO" ? "videos" : "screenshots"} are published
+            yet. Choose All to see the other testimonials.
+          </p>
+        )}
         {visible.map((item) => {
-          const label = `${item.ownerName} uploaded ${item.mediaType === "VIDEO" ? "a short video" : "a screenshot"}`;
+          const label = demo
+            ? `Demo ${item.mediaType === "VIDEO" ? "video" : "screenshot"}: ${item.ownerName}; not a real review`
+            : `${item.ownerName} uploaded ${item.mediaType === "VIDEO" ? "a short video" : "a screenshot"}`;
           return (
             <figure className="testimonial-card" key={item.id}>
+              {demo && (
+                <span className="portfolio-demo-badge">
+                  Sample testimonial · not a real review
+                </span>
+              )}
               {item.mediaUrl && (
                 <div className="testimonial-media">
                   {item.mediaType === "VIDEO" ? (
-                    <video controls playsInline preload="metadata" aria-label={label}>
+                    <video
+                      controls
+                      playsInline
+                      preload="metadata"
+                      aria-label={label}
+                    >
                       <source src={item.mediaUrl} />
                       {item.captionsUrl ? (
                         <track
@@ -120,7 +156,11 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
                       type="button"
                       className="lightbox-trigger"
                       onClick={() =>
-                        setOpenIndex(screenshots.findIndex((image) => image.id === item.id))
+                        setOpenIndex(
+                          screenshots.findIndex(
+                            (image) => image.id === item.id,
+                          ),
+                        )
                       }
                       aria-label={`View full screenshot: ${label}`}
                     >
@@ -154,7 +194,8 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
                 </details>
               )}
               <p className="small muted">
-                Owner-uploaded {item.mediaType === "VIDEO" ? "video" : "screenshot"}
+                {demo ? "Illustrative example" : "Owner-uploaded"}{" "}
+                {item.mediaType === "VIDEO" ? "video" : "screenshot"}
               </p>
             </figure>
           );
@@ -178,13 +219,15 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
             const startX = touchStartX.current;
             const endX = e.changedTouches[0]?.clientX;
             touchStartX.current = null;
-            if (startX === null || endX === undefined || screenshots.length < 2) return;
+            if (startX === null || endX === undefined || screenshots.length < 2)
+              return;
             const delta = endX - startX;
             if (Math.abs(delta) < 48) return;
             setOpenIndex((index) =>
               index === null
                 ? null
-                : (index + (delta < 0 ? 1 : -1) + screenshots.length) % screenshots.length,
+                : (index + (delta < 0 ? 1 : -1) + screenshots.length) %
+                  screenshots.length,
             );
           }}
         >
@@ -207,7 +250,9 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
                   aria-label="Previous owner screenshot"
                   onClick={() =>
                     setOpenIndex((index) =>
-                      index === null ? null : (index - 1 + screenshots.length) % screenshots.length,
+                      index === null
+                        ? null
+                        : (index - 1 + screenshots.length) % screenshots.length,
                     )
                   }
                 >
@@ -234,7 +279,8 @@ export function TestimonialGallery({ items }: { items: Testimonial[] }) {
               )}
             </div>
             <p className="small" style={{ color: "#e9efec", margin: 0 }}>
-              {opened.quote || `${opened.ownerName}${opened.city ? ` · ${opened.city}` : ""}`}
+              {opened.quote ||
+                `${opened.ownerName}${opened.city ? ` · ${opened.city}` : ""}`}
             </p>
           </div>
         </div>

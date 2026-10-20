@@ -28,12 +28,14 @@ export async function HomePortfolioSection() {
           <div>
             <p className="eyebrow">For property owners · our portfolio</p>
             <h2 id="owner-band-title">
+              {portfolio?.managedCount ? <>
               We run stays across {portfolio?.managedCount ?? 0}{" "}
               {(portfolio?.managedCount ?? 0) === 1 ? "property" : "properties"}
               {cities.length
                 ? ` in ${cities.length} ${cities.length === 1 ? "city" : "cities"}`
                 : ""}
               .
+              </> : "Your property. Thoughtfully managed."}
             </h2>
           </div>
           <Link href="/portfolio" className="text-link">
@@ -53,7 +55,7 @@ export async function HomePortfolioSection() {
                   <Link
                     key={city.slug}
                     className="location-tile"
-                    href={`/portfolio/cities/${city.slug}`}
+                    href={`/portfolio#city-${city.slug}`}
                   >
                     <span className="location-number">
                       {city.count} {city.count === 1 ? "stay" : "stays"}
@@ -85,7 +87,7 @@ export async function HomePortfolioSection() {
                   Owners hand over day-to-day operations; team keeps listings
                   honest and properties cared for.
                 </p>
-                <Link className="button secondary" href="/services">
+                <Link className="button secondary" href="/portfolio#services">
                   View owner services
                 </Link>
               </div>

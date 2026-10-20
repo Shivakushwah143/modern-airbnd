@@ -52,7 +52,7 @@ export default function RootLayout({
               <Link href="/stays">Explore stays</Link>
               <Link href="/locations">Destinations</Link>
               <Link href="/portfolio">Owner portfolio</Link>
-              <Link href="/services">Our services</Link>
+              <Link href="/portfolio#services">Our services</Link>
             </nav>
             <nav aria-label="Company">
               <Link href="/about">About us</Link>

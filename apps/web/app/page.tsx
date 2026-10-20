@@ -60,13 +60,13 @@ export default async function Home() {
   const fallbackShowcase = properties.slice(0, 5);
   const featured = showcase.length ? showcase : fallbackShowcase;
   // QA-013: portfolio-led home. Every figure below comes from the real
-  // portfolio API — nothing here is invented.
+  // portfolio API: nothing here is invented.
   return (
-    <div className="landing-page">
+    <div className="landing-page home-page">
       <section className={`landing-hero ${hero ? "has-photo" : ""}`}>
         {hero && (
           <div className="landing-hero-bg" aria-hidden="true">
-            <Photo media={hero.media[0]} priority />
+            <Photo media={hero.media.find(media => media.isCover) || hero.media[0]} priority />
           </div>
         )}
         <div className="container landing-hero-inner">
@@ -86,19 +86,30 @@ export default async function Home() {
                 <Icon name="calendar" size={16} /> Book a Stay
               </Link>
             </div>
-            <Search locations={activeLocations} />
-            <div className="landing-hero-note">
-              <Icon name="chat" size={17} />
-              Enquiries are saved before WhatsApp opens. No instant reservation.
-            </div>
           </div>
+          <div className="landing-booking-panel">
+            <div className="landing-search-heading">
+              <span className="home-section-icon"><Icon name="search" size={21} /></span>
+              <div>
+                <h2>Find your next stay</h2>
+                <p>Choose your city, dates and guests.</p>
+              </div>
+            </div>
+            <Search locations={activeLocations} />
+            <p className="landing-hero-note">
+              <Icon name="chat" size={17} />
+              Enquire with the team on WhatsApp. Your stay is confirmed personally, not instantly.
+            </p>
           {hero && (
             <Link href={propertyHref(hero)} className="landing-hero-card">
-              <span>{hero.location.name}</span>
+              <Icon name="home" size={20} />
+              <span><small>Featured in {hero.location.name}</small>
               <strong>{hero.name}</strong>
-              <small>{stayMeta(hero)}</small>
+              <small>{stayMeta(hero)}</small></span>
+              <Icon name="arrowRight" size={18} />
             </Link>
           )}
+          </div>
         </div>
       </section>
 
@@ -114,128 +125,15 @@ export default async function Home() {
       >
         <HomePortfolioSection />
       </Suspense>
-      {/* Legacy inline portfolio section retained temporarily while the async
-          boundary is extracted. */}
-      {/* <section className="landing-section owner-portfolio-band" aria-labelledby="owner-band-title">
-        <div className="container">
-          <div className="landing-section-head">
-            <div>
-              <p className="eyebrow">For property owners · our portfolio</p>
-              <h2 id="owner-band-title">
-                We run stays across {portfolio?.managedCount ?? 0} {""}
-                {(portfolio?.managedCount ?? 0) === 1 ? "property" : "properties"}
-                {ownerCities.length
-                  ? ` in ${ownerCities.length} ${ownerCities.length === 1 ? "city" : "cities"}`
-                  : ""}
-                .
-              </h2>
-            </div>
-            <Link href="/portfolio" className="text-link">
-              View the full portfolio
-            </Link>
-          </div>
-
-          {portfolio === null && (
-            <div className="notice error" role="alert">
-              <p>
-                The portfolio service is unavailable right now. Retry this page,
-                or read about our services while it recovers.
-              </p>
-              <RetryButton label="Retry portfolio" />
-            </div>
-          )}
-
-          {portfolio && ownerCities.length > 0 && (
-            <div className="location-grid">
-              {ownerCities.map((c) => (
-                <Link
-                  key={c.slug}
-                  className="location-tile"
-                  href={`/portfolio/cities/${c.slug}`}
-                >
-                  <span className="location-number">
-                    {c.count} {c.count === 1 ? "stay" : "stays"}
-                  </span>
-                  <p className="eyebrow">
-                    <CityIcon slug={c.slug} size={14} />{" "}
-                    {c.state || "Managed city"}
-                  </p>
-                  <h3>{c.name}</h3>
-                  <span>View managed properties</span>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {portfolio && ownerCases.length > 0 && (
-            <div className="case-grid">
-              {ownerCases.map((item) => (
-                <CaseStudyCard key={item.id} item={item} />
-              ))}
-            </div>
-          )}
-
-          <div className="landing-owner-split">
-            <div className="landing-owner-services">
-              <p className="eyebrow">Management services</p>
-              <h3>Listings, availability, guests and on-ground operations.</h3>
-              <p className="muted">
-                Owners hand over the day-to-day; the team keeps listings honest,
-                bookings coordinated and properties cared for.
-              </p>
-              <Link className="button secondary" href="/services">
-                View owner services
-              </Link>
-            </div>
-            {ownerTeam.length > 0 && (
-              <div>
-                <p className="eyebrow">Management team</p>
-                <div className="team-grid">
-                  {ownerTeam.map((member) => (
-                    <TeamCard key={member.id} member={member} />
-                  ))}
-                </div>
-              </div>
-            )}
-            {ownerTestimonials.length > 0 && (
-              <div>
-                <p className="eyebrow">Owner voices · genuine media</p>
-                <div className="testimonial-grid">
-                  {ownerTestimonials.map((item) => (
-                    <TestimonialCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {portfolio &&
-            !ownerCities.length &&
-            !ownerTeam.length &&
-            !ownerTestimonials.length && (
-              <div className="empty-state">
-                <h3>The portfolio is being published.</h3>
-                <p>
-                  City-wise listings, team profiles and owner media go live as
-                  they are approved. Describe your property in the meantime.
-                </p>
-                <Link className="button primary" href="/owners">
-                  List your property
-                </Link>
-              </div>
-            )}
-        </div>
-      </section> */}
-
       <section className="landing-section destination-section" aria-labelledby="destination-title">
         <div className="container">
           <div className="landing-section-head">
             <div>
               <p className="eyebrow">Explore destinations</p>
-              <h2 id="destination-title">Pick a Destination</h2>
+              <h2 id="destination-title">Where would you like to stay?</h2>
             </div>
             <Link href="/locations" className="text-link">
-              All destinations
+              All destinations <Icon name="arrowRight" size={16} />
             </Link>
           </div>
           {hasLoadError ? (
@@ -271,10 +169,10 @@ export default async function Home() {
           <div className="landing-section-head">
             <div>
               <p className="eyebrow">Property edit</p>
-              <h2 id="showcase-title">Real stays, shown with room to breathe.</h2>
+              <h2 id="showcase-title">Find a place that feels like you.</h2>
             </div>
             <Link href="/stays" className="text-link">
-              Explore all stays
+              Explore all stays <Icon name="arrowRight" size={16} />
             </Link>
           </div>
           {properties.some((property) => property.isDemo) && (
@@ -301,7 +199,7 @@ export default async function Home() {
                     href={propertyHref(property)}
                     aria-label={`View ${property.name}`}
                   >
-                    <Photo media={property.media[0]} demo={property.isDemo} />
+                    <Photo media={property.media.find(media => media.isCover) || property.media[0]} demo={property.isDemo} />
                   </Link>
                   <div className="editorial-property-copy">
                     <span className="editorial-index">0{index + 1}</span>
@@ -339,12 +237,12 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="landing-story">
+      <section className="landing-story" aria-labelledby="home-story-title">
         <div className="container landing-story-grid">
           <div>
             <p className="eyebrow">Operator note</p>
-            <h2>
-              Hospitality is confirmed by people, not by a checkout button.
+            <h2 id="home-story-title">
+              Your stay, confirmed by people.
             </h2>
           </div>
           <div>
@@ -358,11 +256,11 @@ export default async function Home() {
                 enquire with the team before making plans.
               </p>
             )}
-            <div className="landing-story-steps" aria-label="Enquiry steps">
-              <span>Choose city</span>
-              <span>Review stay</span>
-              <span>Send enquiry</span>
-            </div>
+            <ol className="landing-story-steps" aria-label="Enquiry steps">
+              <li><Icon name="pin" size={20} /><div><strong>Choose your city</strong><p>Start with where you want to be.</p></div></li>
+              <li><Icon name="home" size={20} /><div><strong>Find your stay</strong><p>Review the space, details and dates.</p></div></li>
+              <li><Icon name="chat" size={20} /><div><strong>Talk to the team</strong><p>Send an enquiry to confirm your plans.</p></div></li>
+            </ol>
           </div>
         </div>
       </section>

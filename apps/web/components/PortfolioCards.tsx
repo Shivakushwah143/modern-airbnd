@@ -8,7 +8,13 @@ import type {
 import { Photo } from "./Photo";
 import { Icon } from "./Icon";
 
-export function TeamCard({ member }: { member: TeamMember }) {
+export function TeamCard({
+  member,
+  demo = false,
+}: {
+  member: TeamMember;
+  demo?: boolean;
+}) {
   const primary = member.title || member.role;
   const secondary =
     member.title && member.role && member.title !== member.role
@@ -25,7 +31,7 @@ export function TeamCard({ member }: { member: TeamMember }) {
         <img
           className="team-photo"
           src={member.photoUrl}
-          alt={`${member.name}${primary ? `, ${primary}` : ""}`}
+          alt={`${demo ? "Generated illustration of fictional team member " : ""}${member.name}${primary ? `, ${primary}` : ""}`}
           loading="lazy"
           width={400}
           height={400}
@@ -34,6 +40,11 @@ export function TeamCard({ member }: { member: TeamMember }) {
         <div className="team-avatar" aria-hidden="true">
           {initials || "?"}
         </div>
+      )}
+      {demo && (
+        <span className="portfolio-demo-badge">
+          Demo profile · fictional person
+        </span>
       )}
       <h3>{member.name}</h3>
       {primary && <p className="team-role">{primary}</p>}
@@ -100,10 +111,14 @@ export function TestimonialCard({ item }: { item: Testimonial }) {
 export function CaseStudyCard({ item }: { item: PortfolioCaseStudy }) {
   // QA-010: case studies lead to the owner-facing case-study detail — never to
   // a guest booking route.
-  const href = `/portfolio/cases/${item.slug}`;
+  const href = `/portfolio#case-${item.slug}`;
   return (
     <article className="portfolio-card">
-      <Link className="portfolio-cover" href={href} aria-label={`Read case study: ${item.title}`}>
+      <Link
+        className="portfolio-cover"
+        href={href}
+        aria-label={`Read case study: ${item.title}`}
+      >
         {item.coverUrl ? (
           <img
             src={item.coverUrl}
@@ -142,7 +157,7 @@ export function ManagedPropertyCard({
 }) {
   // QA-010: portfolio listings open the owner-facing property view — the guest
   // booking journey is separate and never implied here.
-  const href = `/portfolio/properties/${p.slug}`;
+  const href = `/portfolio#property-${p.slug}`;
   return (
     <article className="property-card">
       <Link className="card-image" href={href} tabIndex={-1} aria-hidden="true">
@@ -162,7 +177,8 @@ export function ManagedPropertyCard({
         </p>
         <p className="facts">
           <Icon name="bed" size={18} />
-          {p.bedrooms} bedrooms · {p.bathrooms} baths · sleeps up to {p.maxGuests}
+          {p.bedrooms} bedrooms · {p.bathrooms} baths · sleeps up to{" "}
+          {p.maxGuests}
         </p>
         <div className="card-foot">
           <Link className="card-link" href={href}>
