@@ -6,10 +6,12 @@
  * no invented facts about the city. Real imagery comes from published
  * property media wherever it exists.
  */
-const MOTIFS = ["skyline", "wave", "mountain", "heritage", "garden"] as const;
+const MOTIFS = ["skyline", "wave", "mountain", "heritage", "garden", "palace", "lake"] as const;
 export type Motif = (typeof MOTIFS)[number];
 
 export function motifFor(slug: string): Motif {
+  const cities: Record<string, Motif> = { delhi: "heritage", gurgaon: "skyline", gurugram: "skyline", jaipur: "palace", goa: "wave", manali: "mountain", udaipur: "lake" };
+  if (cities[slug]) return cities[slug];
   let hash = 0;
   for (let i = 0; i < slug.length; i++)
     hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
@@ -36,6 +38,8 @@ export function CityIcon({
       strokeLinejoin="round"
       aria-hidden="true"
     >
+      {motif === "palace" && <><path d="M3 21h18M5 21V8h4v13m6 0V8h4v13M9 21V5h6v16M4 8l3-4 3 4m4 0 3-4 3 4M10 5l2-3 2 3" /><path d="M11 21v-5h2v5M11 9h2m-2 3h2" /></>}
+      {motif === "lake" && <><path d="M3 18c2-2 4 2 6 0s4 2 6 0 4 2 6 0M3 22c2-2 4 2 6 0s4 2 6 0 4 2 6 0M5 14V8h14v6M4 8h16M8 8V5l4-3 4 3v3M9 14v-3m6 3v-3" /></>}
       {motif === "skyline" && (
         <>
           <path d="M3 21h18" />

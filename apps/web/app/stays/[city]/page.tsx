@@ -6,6 +6,7 @@ import { Search } from "@/components/Search";
 import { PropertyCard } from "@/components/Property";
 import { CityIcon } from "@/components/CityIcon";
 import type { Location, Property } from "@modern-airbnd/contracts";
+import { SAMPLE_DESTINATIONS } from "@/lib/sample-destinations";
 
 async function loadCity(slug: string) {
   const [locationResult, propertyResult] = await Promise.allSettled([
@@ -20,7 +21,10 @@ async function loadCity(slug: string) {
     new Map(catalogue.map((p) => [p.location.id, p.location])).values(),
   );
   const pool = locations.length ? locations : derived;
-  const location = pool.find((l) => l.slug === slug);
+  const location = pool.find((l) => l.slug === slug) ||
+    (locationResult.status === "fulfilled" && propertyResult.status === "fulfilled"
+      ? SAMPLE_DESTINATIONS.find(sample => sample.slug === slug)
+      : undefined);
   return {
     location,
     catalogue,
@@ -42,7 +46,7 @@ export async function generateMetadata({
   return {
     title,
     alternates: { canonical: `/stays/${city}` },
-    robots: location ? undefined : { index: false, follow: false },
+    robots: location && !location.id.startsWith("sample-") ? undefined : { index: false, follow: false },
   };
 }
 
@@ -89,6 +93,18 @@ export default async function CityStays({
       </div>
     );
   }
+
+  if (location.id.startsWith("sample-")) return (
+    <div className="container section narrow sample-destination-page">
+      <Link href="/locations" className="text-link">All destinations</Link>
+      <span className="landing-destination-photo"><CityIcon slug={location.slug} size={40} /></span>
+      <p className="eyebrow">Sample destination</p>
+      <h1>Explore {location.name}</h1>
+      <p className="intro">{location.state}</p>
+      <p>This is a sample destination preview. No stays are published or available to book here yet.</p>
+      <Link href="/stays" className="button primary">Browse published stays</Link>
+    </div>
+  );
 
   let properties: Property[] = [];
   let error = loadError

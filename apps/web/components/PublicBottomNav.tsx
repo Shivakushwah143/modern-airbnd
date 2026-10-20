@@ -1,32 +1,12 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { NavigationLink } from "./NavigationLink";
 import { BOTTOM_LINKS, isNavActive, navMode } from "@/lib/nav";
 
 export function PublicBottomNav() {
   const pathname = usePathname();
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
   const mode = navMode(pathname);
-
-  useEffect(() => {
-    lastScrollY.current = window.scrollY;
-    setHidden(false);
-
-    const onScroll = () => {
-      const currentY = window.scrollY;
-      const delta = currentY - lastScrollY.current;
-      if (currentY < 24) setHidden(false);
-      else if (delta > 8) setHidden(true);
-      else if (delta < -8) setHidden(false);
-      lastScrollY.current = currentY;
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [pathname]);
 
   // Admin workspaces run alone, and PDPs keep their sticky enquiry action.
   if (mode === "admin") return null;
@@ -38,7 +18,7 @@ export function PublicBottomNav() {
 
   return (
     <nav
-      className={`public-bottom-nav ${hidden ? "is-hidden" : ""}`}
+      className="public-bottom-nav"
       aria-label="Quick navigation"
       data-nav-mode={mode}
     >

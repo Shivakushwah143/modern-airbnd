@@ -12,7 +12,8 @@ import { Icon } from "@/components/Icon";
 import { Operator } from "@/components/Trust";
 import { HomePortfolioSection } from "@/components/HomePortfolioSection";
 import { RetryButton } from "@/components/RetryButton";
-import { CityIcon } from "@/components/CityIcon";
+import { DestinationCarousel } from "@/components/DestinationCarousel";
+import { withSampleDestinations } from "@/lib/sample-destinations";
 
 function propertyHref(property: Property) {
   // QA-007/QA-012: guest-facing links use the canonical /stays journey, never
@@ -230,7 +231,7 @@ export default async function Home() {
         <div className="container">
           <div className="landing-section-head">
             <div>
-              <p className="eyebrow">Published destinations</p>
+              <p className="eyebrow">Explore destinations</p>
               <h2 id="destination-title">Pick a Destination</h2>
             </div>
             <Link href="/locations" className="text-link">
@@ -251,7 +252,7 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
-          ) : activeLocations.length ? (
+          ) : (
             <>
               {hasPartialLocationError && (
                 <p className="notice destination-note">
@@ -259,29 +260,8 @@ export default async function Home() {
                   derived from currently published properties.
                 </p>
               )}
-              <div className="landing-destinations">
-                {activeLocations.map((location) => {
-                  return (
-                    <Link
-                      className="landing-destination"
-                      href={`/stays/${location.slug}`}
-                      key={location.id}
-                    >
-                      <span className="landing-destination-photo" aria-hidden="true">
-                        <CityIcon slug={location.slug} size={46} />
-                      </span>
-                      <strong>{location.name}</strong>
-                      {location.state && <small>{location.state}</small>}
-                    </Link>
-                  );
-                })}
-              </div>
+              <DestinationCarousel locations={withSampleDestinations(activeLocations.length ? activeLocations : locations)} />
             </>
-          ) : (
-            <div className="empty-state">
-              <h3>No destinations are published yet.</h3>
-              <p>Please check back once the property team publishes a stay.</p>
-            </div>
           )}
         </div>
       </section>

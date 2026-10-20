@@ -3003,11 +3003,6 @@ p {
   .public-bottom-nav::-webkit-scrollbar {
     display: none;
   }
-  .public-bottom-nav.is-hidden {
-    transform: translateY(calc(100% + env(safe-area-inset-bottom)));
-    opacity: 0;
-    pointer-events: none;
-  }
   .public-bottom-nav a {
     flex: 1 1 0;
     min-width: 0;
@@ -4933,6 +4928,45 @@ header[data-nav-mode="owner"] .brand strong {
   .admin-main .stat-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Compact destination loop; manual navigation remains available when paused. */
+.destination-carousel { min-width: 0; }
+.destination-carousel-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; color: var(--muted); font-size: 0.75rem; }
+.destination-carousel-controls button { min-height: 44px; padding: 8px 12px; border: 1px solid #a9b5a9; border-radius: 999px; color: var(--primary); font-weight: 700; }
+.destination-carousel-viewport { overflow-x: auto; scrollbar-width: none; }
+.destination-carousel-viewport::-webkit-scrollbar { display: none; }
+.destination-carousel-track { display: flex; width: max-content; animation: destination-loop 60s linear infinite; }
+.destination-carousel-group { display: flex; gap: 24px; padding: 12px 24px 20px 0; flex-shrink: 0; }
+.destination-carousel .landing-destination { flex: 0 0 120px; width: 120px; min-height: 142px; border-radius: 12px; padding: 8px 4px; }
+.destination-carousel .landing-destination-photo { width: 76px; margin-bottom: 14px; box-shadow: 0 0 0 4px #e8e3d6; background: #eee9df; }
+.destination-carousel .landing-destination strong { font-size: 0.9375rem; }
+.destination-carousel .landing-destination small { font-size: 0.75rem; margin-top: 5px; }
+.destination-sample-label { display: inline-block; margin-top: 5px; color: #755132; font-size: 0.6875rem; line-height: 1.5; }
+.destination-carousel.is-paused .destination-carousel-track,
+.destination-carousel-viewport:focus-within .destination-carousel-track { animation-play-state: paused; }
+@media (hover: hover) {
+  .destination-carousel:hover .destination-carousel-track { animation-play-state: paused; }
+}
+@keyframes destination-loop { to { transform: translateX(-33.333333%); } }
+.sample-destination-page .landing-destination-photo { width: 84px; margin: 32px 0 24px; }
+.sample-destination-page .button { margin-top: 24px; }
+@media (max-width: 767px) {
+  .public-bottom-nav { box-sizing: border-box; width: 100%; max-width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; transform: none; }
+  .public-bottom-nav > a { width: 100%; min-width: 0; }
+  .public-bottom-nav > a > span:not(.sr-only) { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+  .destination-carousel-group { gap: 16px; padding-right: 16px; }
+  .destination-carousel .landing-destination { flex-basis: 88px; width: 88px; min-height: 128px; }
+  .destination-carousel .landing-destination-photo { width: 58px; margin-bottom: 12px; }
+  .destination-carousel .landing-destination-photo svg { width: 30px; height: 30px; }
+  .destination-carousel .landing-destination strong { font-size: 0.8125rem; }
+  .destination-carousel .landing-destination small { font-size: 0.6875rem; }
+  .destination-carousel-controls { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .destination-carousel-track { animation: none; }
+  .destination-carousel-group[aria-hidden="true"] { display: none; }
+  .destination-carousel-controls { display: none; }
 }
 
 /* Admin workspace: scoped surfaces, clear navigation and readable operations. */

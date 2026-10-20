@@ -2,6 +2,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { CityIcon } from "@/components/CityIcon";
 import type { Location, Property } from "@modern-airbnd/contracts";
+import { withSampleDestinations } from "@/lib/sample-destinations";
 
 export const metadata = { title: "Destinations" };
 
@@ -30,10 +31,10 @@ export default async function Locations() {
   return (
     <div className="container section">
       <p className="eyebrow">Destinations</p>
-      <h1>Browse cities with published properties.</h1>
+      <h1>Explore our destinations.</h1>
       <p className="intro">
-        Property counts are derived from the current catalogue. Choose a city to
-        see only matching properties.
+        Choose a city to see matching properties. Stay counts come from the
+        current catalogue; sample destinations are marked as previews.
       </p>
       {hasLoadError && (
         <div className="notice error" role="alert">
@@ -54,7 +55,7 @@ export default async function Locations() {
         </p>
       )}
       <div className="destination-grid">
-        {(activeLocations.length ? activeLocations : availableLocations).map((location) => {
+        {withSampleDestinations(activeLocations.length ? activeLocations : availableLocations).map((location) => {
           const cityProperties = properties.filter(
             (property) => property.location.id === location.id,
           );
@@ -71,6 +72,7 @@ export default async function Locations() {
               <div>
                 <h2>{location.name}</h2>
                 <p>{location.state}</p>
+                {location.id.startsWith("sample-") && <small className="destination-sample-label">Sample destination</small>}
               </div>
               <strong>
                 {cityProperties.length}{" "}
