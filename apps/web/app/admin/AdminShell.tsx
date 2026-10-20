@@ -70,6 +70,23 @@ const WORKSPACE_CARDS: [string, string, string][] = [
     "Content pages, business details and site copy.",
   ],
 ];
+const TAB_META: Record<Tab, { label: string; icon: string }> = {
+  dashboard: { label: "Overview", icon: "home" },
+  properties: { label: "Properties", icon: "bed" },
+  portfolio: { label: "Portfolio", icon: "photo" },
+  cms: { label: "Content pages", icon: "photo" },
+  enquiries: { label: "Enquiries", icon: "chat" },
+  reservations: { label: "Reservations", icon: "calendar" },
+  guests: { label: "Guests", icon: "users" },
+  owners: { label: "Owners", icon: "users" },
+  ownerLeads: { label: "Owner leads", icon: "chat" },
+  housekeeping: { label: "Housekeeping", icon: "check" },
+  maintenance: { label: "Maintenance", icon: "tool" },
+  locations: { label: "Locations", icon: "pin" },
+  settings: { label: "Business & contact", icon: "settings" },
+  finance: { label: "Finance", icon: "finance" },
+  media: { label: "Media library", icon: "photo" },
+};
 type Confirm = { title: string; message: string; action: () => Promise<void> };
 type AdminPropertyLabel = { id?: string; name: string; slug?: string; status?: string };
 type AdminEnquiry = {
@@ -204,6 +221,7 @@ export function AdminShell({
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const [sessionAttempt, setSessionAttempt] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
   const operationInFlight = useRef(false);
   const [tab, setTab] = useState<Tab>(
     tabs.includes(defaultTab) ? defaultTab : tabs[0] || "dashboard",
@@ -528,12 +546,12 @@ export function AdminShell({
     );
   if (!auth)
     return (
-      <div className="login-card">
+      <div className="admin-login-wrap"><div className="login-card admin-login-card">
         <span className="brand-mark">
           <Icon name="shield" size={30} />
         </span>
-        <p className="eyebrow">Modern Stayz</p>
-        <h1>Admin sign in</h1>
+        <p className="eyebrow">Modern Stayz · Admin workspace</p>
+        <h1>Welcome back.</h1>
         <p className="muted">
           Sign in to manage listings, guest operations and site content.
         </p>
@@ -551,38 +569,59 @@ export function AdminShell({
             }, "Signed in.");
           }}
         >
-          <label>
+          <label htmlFor="admin-password">
             Password
-            <input
-              type="password"
+          </label>
+            <span className="admin-password-field"><input
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
               maxLength={512}
-            />
-          </label>
+              id="admin-password"
+            /><button type="button" className="admin-password-toggle" aria-controls="admin-password" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>
+              <Icon name={showPassword ? "eyeOff" : "eye"} size={20} />
+            </button></span>
           {error && (
-            <p role="alert" className="field-error">
-              {error}
-            </p>
+            <div role="alert" className="field-error">
+              <p>{error}</p>
+              {error === "The owner workspace could not be reached. Please retry." && (
+                <button type="button" className="button secondary" onClick={() => setSessionAttempt(attempt => attempt + 1)}>
+                  Retry connection
+                </button>
+              )}
+            </div>
           )}
           <AsyncButton busy={busy} busyLabel="Signing in…">
             {busy ? "Signing in…" : "Sign in"}
           </AsyncButton>
         </form>
-      </div>
+        <Link className="admin-login-back" href="/">Back to Modern Stayz <Icon name="arrowRight" size={16} /></Link>
+      </div></div>
     );
   return (
     <div className="admin-layout container">
-      <aside className="admin-nav">
-        <p className="eyebrow">MODERN STAYZ / ADMIN</p>
+      <aside className="admin-nav" aria-label="Workspace sections">
+        <p className="eyebrow">MODERN STAYZ</p>
         <h2>Workspace</h2>
-        {(tabs.length <= 6 || defaultTab !== "dashboard") &&
-          tabs.map((t) => (
+        <label className="admin-mobile-section">
+          Workspace section
+          <select value={tab} onChange={(event) => {
+            if (!confirmEditorExit()) return;
+            setTab(event.target.value as Tab);
+            setEditing(null);
+            setError("");
+          }}>
+            {tabs.map((t) => <option key={t} value={t}>{TAB_META[t].label}</option>)}
+          </select>
+        </label>
+        <nav className="admin-section-nav" aria-label="Admin sections">
+        {tabs.map((t) => (
             <button
               className={tab === t ? "active" : ""}
               key={t}
+              aria-current={tab === t ? "page" : undefined}
               onClick={() => {
                 if (!confirmEditorExit()) return;
                 setTab(t);
@@ -590,24 +629,13 @@ export function AdminShell({
                 setError("");
               }}
             >
-              {t === "ownerLeads"
-                ? "Owner Leads"
-                : t === "settings"
-                  ? "Business & contact"
-                  : t === "dashboard"
-                    ? "Dashboard"
-                    : t === "portfolio"
-                      ? "Portfolio"
-                      : t === "cms"
-                        ? "Content pages"
-                        : t === "finance"
-                          ? "Finance"
-                          : t === "media"
-                            ? "Media library"
-                            : t[0].toUpperCase() + t.slice(1)}
+              <Icon name={TAB_META[t].icon} size={18} />
+              <span>{TAB_META[t].label}</span>
             </button>
           ))}
+        </nav>
         <button
+          className="admin-sign-out"
           onClick={() => {
             if (!confirmEditorExit()) return;
             void run(async () => {
@@ -617,7 +645,7 @@ export function AdminShell({
             }, "Signed out.");
           }}
         >
-          Sign out
+          <Icon name="logout" size={18} /> Sign out
         </button>
       </aside>
       <div className="admin-main">
@@ -1886,26 +1914,18 @@ export function AdminShell({
         )}
         {tab === "dashboard" && dashboard && (
           <>
-            <div className="section-heading">
+            <div className="section-heading admin-dashboard-heading">
               <div>
-                <p className="eyebrow">TODAY</p>
+                <p className="eyebrow">YOUR WORKSPACE AT A GLANCE</p>
                 <h1>Operations dashboard</h1>
+                <p className="muted">Keep every stay and every property running smoothly.</p>
               </div>
+              <span className="admin-date"><Icon name="calendar" size={18} />{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(`${dashboard.date.slice(0, 10)}T12:00:00+05:30`))}</span>
             </div>
-            <div className="workspace-grid">
-              {WORKSPACE_CARDS.map(([href, label, copy]) => (
-                <Link className="portfolio-card" key={href} href={href}>
-                  <p className="eyebrow">WORKSPACE</p>
-                  <h3>{label}</h3>
-                  <p className="muted small">{copy}</p>
-                  <span className="text-link">Open {label}</span>
-                </Link>
-              ))}
-            </div>
-            <div className="stat-grid">
+            <div className="stat-grid admin-dashboard-stats" aria-label="Operations summary">
               {[
-                ["Total", dashboard.counts.totalProperties, "properties"],
-                ["Published", dashboard.counts.publishedProperties, "properties"],
+                ["Total properties", dashboard.counts.totalProperties, "properties"],
+                ["Published stays", dashboard.counts.publishedProperties, "properties"],
                 ["Check-ins", dashboard.counts.todaysCheckIns, "reservations"],
                 ["Check-outs", dashboard.counts.todaysCheckOuts, "reservations"],
                 ["Upcoming", dashboard.counts.upcomingStays, "reservations"],
@@ -1920,23 +1940,41 @@ export function AdminShell({
                   className="stat"
                   key={label}
                   onClick={() => setTab(target as Tab)}
+                  aria-label={`${label}: ${count ?? 0}. View ${TAB_META[target as Tab].label.toLowerCase()}`}
                 >
-                  <span>{label}</span>
-                  <strong>{count}</strong>
+                  <span className="admin-stat-label"><Icon name={TAB_META[target as Tab].icon} size={18} />{label}</span>
+                  <strong>{count ?? 0}</strong>
+                  <span className="admin-stat-link">View details <Icon name="arrowRight" size={14} /></span>
                 </button>
               ))}
             </div>
-            <section className="admin-section">
-              <h2>Today's check-ins</h2>
+            <div className="admin-queue-grid">
+            <section className="admin-section admin-queue">
+              <div className="admin-queue-heading"><h2>Today's check-ins</h2><span className="admin-count">{dashboard.arrivals.length}</span></div>
               <StayRows rows={dashboard.arrivals} run={run} refresh={refresh} />
             </section>
-            <section className="admin-section">
-              <h2>Today's check-outs</h2>
+            <section className="admin-section admin-queue">
+              <div className="admin-queue-heading"><h2>Today's check-outs</h2><span className="admin-count">{dashboard.departures.length}</span></div>
               <StayRows rows={dashboard.departures} run={run} refresh={refresh} />
             </section>
-            <section className="admin-section">
-              <h2>Upcoming stays</h2>
+            <section className="admin-section admin-queue admin-queue-upcoming">
+              <div className="admin-queue-heading"><h2>Upcoming stays</h2><span className="admin-count">{dashboard.upcoming.length}</span></div>
               <StayRows rows={dashboard.upcoming} run={run} refresh={refresh} />
+            </section>
+            </div>
+            <section className="admin-workspaces" aria-labelledby="admin-workspaces-title">
+              <h2 id="admin-workspaces-title">Manage your workspace</h2>
+              <p className="muted">Go straight to the tools you need.</p>
+              <div className="workspace-grid">
+                {WORKSPACE_CARDS.map(([href, label, copy], index) => (
+                  <Link className="admin-workspace-card" key={href} href={href}>
+                    <span className="admin-workspace-icon"><Icon name={["bed", "photo", "calendar", "settings"][index]} size={22} /></span>
+                    <h3>{label}</h3>
+                    <p>{copy}</p>
+                    <span className="admin-workspace-link">Open workspace <Icon name="arrowRight" size={16} /></span>
+                  </Link>
+                ))}
+              </div>
             </section>
           </>
         )}
@@ -2728,7 +2766,7 @@ function StayRows({
   run: (fn: () => Promise<void>, success?: string) => Promise<void>;
   refresh: () => Promise<void>;
 }) {
-  if (!rows.length) return <p className="muted">No stays in this queue.</p>;
+  if (!rows.length) return <div className="admin-queue-empty"><Icon name="calendar" size={26} /><p>No stays in this queue.</p><span>New reservations will appear here.</span></div>;
   return (
     <>
       {rows.map((r) => (

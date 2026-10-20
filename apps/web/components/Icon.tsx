@@ -6,6 +6,14 @@ export function Icon({
   size?: number;
 }) {
   const paths: Record<string, React.ReactNode> = {
+    arrowRight: <path d="M4 12h16m-6-6 6 6-6 6" />,
+    users: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2" /></>,
+    tool: <path d="m14 6 4 4 4-4a7 7 0 0 1-9 9L6 22l-4-4 7-7a7 7 0 0 1 9-9Z" />,
+    settings: <><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" /><circle cx="15" cy="17" r="3" /></>,
+    finance: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18m-5 5h2" /></>,
+    logout: <><path d="M9 4H4v16h5m0-8h12m-5-5 5 5-5 5" /></>,
+    eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
+    eyeOff: <><path d="m3 3 18 18M9 5a12 12 0 0 1 3 0c7 0 10 7 10 7a17 17 0 0 1-3 4M6 6a18 18 0 0 0-4 6s3 7 10 7a12 12 0 0 0 5-1M10 10a3 3 0 0 0 4 4" /></>,
     search: (
       <>
         <circle cx="10.5" cy="10.5" r="6.5" />

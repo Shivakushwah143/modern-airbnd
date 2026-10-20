@@ -25,6 +25,9 @@ async function loadCity(slug: string) {
     location,
     catalogue,
     loadError: propertyResult.status === "rejected",
+    lookupError:
+      locationResult.status === "rejected" ||
+      propertyResult.status === "rejected",
   };
 }
 
@@ -68,8 +71,24 @@ export default async function CityStays({
   };
   const query = queryString({ location: city, ...q });
 
-  const { location, catalogue, loadError } = await loadCity(city);
-  if (!location) notFound();
+  const { location, catalogue, loadError, lookupError } = await loadCity(city);
+  if (!location) {
+    if (!lookupError) notFound();
+    return (
+      <div className="container section narrow">
+        <h1>City stays are temporarily unavailable</h1>
+        <p className="notice error" role="alert">
+          We could not load this destination. Please try again shortly.
+        </p>
+        <Link className="button secondary" href={`/stays/${encodeURIComponent(city)}`}>
+          Try again
+        </Link>
+        <Link className="button secondary" href="/stays">
+          Browse destinations
+        </Link>
+      </div>
+    );
+  }
 
   let properties: Property[] = [];
   let error = loadError
