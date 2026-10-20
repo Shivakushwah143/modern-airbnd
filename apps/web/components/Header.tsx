@@ -83,7 +83,17 @@ export function Header() {
           ))}
         </div>
         {publicHeader && (
-          <NavigationLink className="header-quick-contact" href={ctas[0].href}>
+          <NavigationLink
+            className="icon-btn header-search"
+            href={pathname === "/" ? "#search" : "/stays#search"}
+            aria-label="Search stays"
+            showPending={false}
+          >
+            <Icon name="search" size={20} />
+          </NavigationLink>
+        )}
+        {publicHeader && (
+          <NavigationLink className="header-quick-contact" href={ctas[0].href} aria-label={ctas[0].label}>
             <Icon name={ctas[0].icon} size={17} />
             <span>{ctas[0].label}</span>
           </NavigationLink>
@@ -100,6 +110,8 @@ export function Header() {
       </div>
       <Dialog
         open={open}
+        modal={false}
+        showCloseButton={false}
         onClose={closeMenu}
         className={`header-menu-dialog ${closing ? "is-closing" : ""}`}
         id="mobile-site-menu"
