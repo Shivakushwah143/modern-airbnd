@@ -4,14 +4,15 @@ import connectPg from "connect-pg-simple";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pinoHttp } from "pino-http";
-import { pino } from "pino";
 import { randomUUID } from "node:crypto";
 import argon2 from "argon2";
 import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { env } from "./config/env.js";
 import { db, sessionPool } from "./db.js";
-import { AppError } from "./lib/errors.js";
+import { AppError, classifyDatabaseError } from "./lib/errors.js";
+import { withReadRetry } from "./lib/read-retry.js";
+import { logger } from "./lib/logger.js";
 import { admin } from "./modules/admin.js";
 import { publicEnquiries } from "./modules/enquiries.js";
 import { operations } from "./modules/operations.js";
@@ -24,17 +25,6 @@ declare module "express-session" {
     admin?: boolean;
   }
 }
-export const logger = pino({
-  level: env.LOG_LEVEL,
-  redact: [
-    "req.headers.cookie",
-    "req.headers.authorization",
-    "res.headers.set-cookie",
-    "password",
-    "body",
-    "req.body",
-  ],
-});
 export const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", env.TRUST_PROXY);
@@ -54,23 +44,38 @@ app.use(
       req: (r) => ({ method: r.method, url: r.url?.split("?")[0] }),
       res: (r) => ({ statusCode: r.statusCode }),
     },
+    customProps: (_req, res) => ({ requestId: res.getHeader("X-Request-ID") }),
   }),
 );
 app.use(express.json({ limit: "64kb" }));
 app.get("/api/v1/health/live", (_req, res) =>
   res.json({ data: { status: "ok" } }),
 );
+function requestSignal(req: express.Request) {
+  const controller = new AbortController();
+  req.once("aborted", () => controller.abort());
+  return controller.signal;
+}
+
+function databaseRead<T>(
+  req: express.Request,
+  res: express.Response,
+  operation: string,
+  run: () => Promise<T>,
+) {
+  res.locals.dbOperation = operation;
+  return withReadRetry(run, {
+    operation,
+    requestId: res.locals.requestId,
+    signal: requestSignal(req),
+    deadlineMs: env.DB_READ_RETRY_DEADLINE_MS,
+    maxAttempts: env.DB_READ_RETRY_MAX_ATTEMPTS,
+  });
+}
+
 app.get("/api/v1/health/ready", async (_req, res) => {
-  try {
-    await db.$queryRaw`SELECT 1`;
-    res.json({ data: { status: "ready" } });
-  } catch {
-    res
-      .status(503)
-      .json({
-        error: { code: "NOT_READY", message: "Database is unavailable." },
-      });
-  }
+  await db.$queryRaw`SELECT 1`;
+  res.json({ data: { status: "ready" } });
 });
 app.use(
   "/api/v1",
@@ -184,37 +189,45 @@ app.use("/api/v1/admin", cmsAdmin);
 app.use("/api/v1", publicEnquiries);
 app.use("/api/v1", portfolioPublic);
 app.use("/api/v1", cmsPublic);
-app.get("/api/v1/locations", async (_req, res) =>
+app.get("/api/v1/locations", async (req, res) =>
   res.json({
-    data: await db.location.findMany({
+    data: await databaseRead(req, res, "locations.list", () => db.location.findMany({
       where: { isActive: true, properties: { some: { status: "PUBLISHED" } } },
       select: { id: true, name: true, slug: true, state: true },
       orderBy: { name: "asc" },
-    }),
+    })),
   }),
 );
-app.get("/api/v1/settings/public", async (_req, res) => {
-  const { id: _id, ...s } = await settings();
+app.get("/api/v1/settings/public", async (req, res) => {
+  const { id: _id, ...s } = await databaseRead(req, res, "settings.public", settings);
   res.json({ data: { ...s, brandName: "Modern Stayz" } });
 });
 app.get(
   ["/api/v1/properties", "/api/v1/properties/search"],
   async (req, res) => {
-    const data = await publicProperties(req.query);
+    const data = await databaseRead(req, res, "properties.list", () =>
+      publicProperties(req.query),
+    );
     res.json({ data, meta: { count: data.length } });
   },
 );
 app.get("/api/v1/properties/:id/availability", async (req, res) => {
-  const p = await db.property.findUnique({
-    where: { id: idSchema.parse(req.params.id) },
-  });
+  const p = await databaseRead(req, res, "properties.availability", () =>
+    db.property.findUnique({ where: { id: idSchema.parse(req.params.id) } }),
+  );
   if (!p) throw new AppError(404, "RESOURCE_NOT_FOUND", "Property not found.");
-  const [data] = await publicProperties(req.query, p.slug);
+  const [data] = await databaseRead(req, res, "properties.availability", () =>
+    publicProperties(req.query, p.slug),
+  );
   res.json({ data: data.availability });
 });
 app.get("/api/v1/properties/:slug", async (req, res) =>
   res.json({
-    data: (await publicProperties(req.query, String(req.params.slug)))[0],
+    data: (
+      await databaseRead(req, res, "properties.detail", () =>
+        publicProperties(req.query, String(req.params.slug)),
+      )
+    )[0],
   }),
 );
 app.use((_req, _res, next) =>
@@ -240,6 +253,10 @@ app.use(
       code = "VALIDATION_ERROR";
       message = err.issues[0]?.message || "Check the supplied values.";
       details = err.flatten();
+    } else if (classifyDatabaseError(err)) {
+      const classification = classifyDatabaseError(err)!;
+      ({ status, code, message } = classification);
+      details = undefined;
     } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2002") {
         status = 409;
@@ -259,11 +276,27 @@ app.use(
       code = "INVALID_JSON";
       message = "Request body must be valid JSON.";
     }
-    if (status >= 500) req.log.error({ err }, "request failed");
+    const databaseError = classifyDatabaseError(err);
+    if (status >= 500)
+      req.log.error(
+        {
+          requestId: res.locals.requestId,
+          code,
+          prismaCode: databaseError?.prismaCode,
+          operation: res.locals.dbOperation,
+          errorType: err instanceof Error ? err.name : typeof err,
+        },
+        "request failed",
+      );
     res
       .status(status)
       .json({
-        error: { code, message, ...(details ? { details } : {}) },
+        error: {
+          code,
+          message,
+          retryable: err instanceof AppError ? err.retryable : !!databaseError?.retryable,
+          ...(details ? { details } : {}),
+        },
         requestId: res.locals.requestId,
       });
   },

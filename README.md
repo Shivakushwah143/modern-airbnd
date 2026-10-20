@@ -38,7 +38,7 @@ node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 Set the matching database password in `DATABASE_URL`. Use a hexadecimal password or URI-encode it. Keep `APP_ORIGIN`, `NEXT_PUBLIC_SITE_URL` and `WEB_PORT` consistent. `APP_ORIGIN` must match the address used by the browser exactly; `localhost` and `127.0.0.1` are different origins.
 
 ```bash
-docker compose up -d postgres
+npm run db:local:up
 npm run db:generate
 npm run db:migrate
 npm run db:seed
@@ -79,13 +79,13 @@ npm run start:web
 
 ### Database-backed tests
 
-Create a separate disposable test database:
+Start isolated disposable test PostgreSQL (port 5433):
 
 ```bash
-docker compose exec postgres createdb -U modern_airbnd modern_airbnd_test
+npm run db:local:test:up
 ```
 
-Set `TEST_DATABASE_URL` in `.env` to that database. Its name must end in `_test`. The API integration suite applies migrations and **truncates that test database**, generates an ephemeral admin credential, and stubs Cloudinary. Never point it at production.
+Set `TEST_DATABASE_URL` in `.env` to that database. Its name must end in `_test`. The API integration suite applies migrations and **truncates that test database**, generates an ephemeral admin credential, and stubs Cloudinary. Never point it at production. The default `.env.example` uses port 5433 so test commands cannot silently target the normal local development database.
 
 ```bash
 npm test

@@ -21,12 +21,15 @@ export default async function Properties({
     checkOut: raw.checkOut,
   };
   const query = queryString(q);
-  const [locationResult, catalogueResult] = await Promise.allSettled([
+  // One canonical catalogue request per server render. The old implementation
+  // loaded all properties, then loaded the filtered catalogue again.
+  const propertyPath = query ? `/properties?${query}` : "/properties";
+  const [locationResult, propertyResult] = await Promise.allSettled([
     api<Location[]>("/locations"),
-    api<Property[]>("/properties"),
+    api<Property[]>(propertyPath),
   ]);
   const catalogue =
-    catalogueResult.status === "fulfilled" ? catalogueResult.value : [];
+    propertyResult.status === "fulfilled" ? propertyResult.value : [];
   const propertyLocations = Array.from(
     new Map(
       catalogue.map((property) => [property.location.id, property.location]),
@@ -36,20 +39,17 @@ export default async function Properties({
     locationResult.status === "fulfilled" && locationResult.value.length
       ? locationResult.value
       : propertyLocations;
-  let properties: Property[] = [];
-  let error =
-    catalogueResult.status === "rejected"
-      ? "The property service is unavailable right now."
-      : locationResult.status === "rejected"
-        ? "Destination details are being refreshed."
+  const properties = catalogue;
+  const error =
+    propertyResult.status === "rejected"
+      ? propertyResult.reason instanceof ApiError && propertyResult.reason.status === 400
+        ? propertyResult.reason.message
+        : "The property service is unavailable right now."
       : "";
-
-  try {
-    properties = query ? await api<Property[]>(`/properties?${query}`) : catalogue;
-  } catch (e) {
-    if (e instanceof ApiError && e.status === 400) error = e.message;
-    else error = "The property service is unavailable right now.";
-  }
+  const locationNotice =
+    locationResult.status === "rejected" && !error
+      ? "Destination details are being refreshed."
+      : "";
 
   const name = locations.find((l) => l.slug === q.location)?.name;
   const allUnavailable =
@@ -78,6 +78,11 @@ export default async function Properties({
       {error && (
         <p className="notice error" role="alert">
           {error} Edit your search above to try again.
+        </p>
+      )}
+      {locationNotice && (
+        <p className="notice" role="status">
+          {locationNotice}
         </p>
       )}
       {allUnavailable && (

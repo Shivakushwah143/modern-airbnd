@@ -5,6 +5,9 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public details?: unknown,
+    public code = "REQUEST_FAILED",
+    public retryable = false,
+    public requestId?: string,
   ) {
     super(message);
   }
@@ -14,19 +17,26 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const base = server
     ? process.env.API_INTERNAL_URL || "http://127.0.0.1:4000"
     : "";
+  const timeout = AbortSignal.timeout(15000);
+  const signal = init?.signal
+    ? AbortSignal.any([init.signal, timeout])
+    : timeout;
   const response = await fetch(`${base}/api/v1${path}`, {
     ...init,
     cache: "no-store",
     headers: { "Content-Type": "application/json", ...init?.headers },
-    signal: init?.signal || AbortSignal.timeout(15000),
+    signal,
   });
   if (response.status === 204) return undefined as T;
-  const body = await response.json();
+  const body = await response.json().catch(() => ({}));
   if (!response.ok)
     throw new ApiError(
       response.status,
       body.error?.message || "Unable to complete the request.",
       body.error?.details,
+      body.error?.code || "REQUEST_FAILED",
+      body.error?.retryable === true,
+      body.requestId || response.headers.get("X-Request-ID") || undefined,
     );
   return body.data as T;
 }

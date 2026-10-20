@@ -1,6 +1,7 @@
-import { app, logger } from "./app.js";
+import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { db, sessionPool } from "./db.js";
+import { logger } from "./lib/logger.js";
 const server = app.listen(env.PORT, "0.0.0.0", () =>
   logger.info({ port: env.PORT }, "Modern Stayz API ready"),
 );

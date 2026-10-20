@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { db } from "../db.js";
 import { AppError, found } from "../lib/errors.js";
+import { withReadRetry } from "../lib/read-retry.js";
+import { env } from "../config/env.js";
 import { idSchema } from "./schemas.js";
 import { portfolioSignature } from "./media.js";
 
@@ -262,9 +264,13 @@ portfolioAdmin.patch("/portfolio/properties/:id", async (req, res) => {
 
 export const portfolioPublic = Router();
 
-portfolioPublic.get("/portfolio", async (_req, res) => {
+portfolioPublic.get("/portfolio", async (req, res) => {
   const portfolioWhere = portfolioPropertyWhere;
-  const [caseStudies, team, testimonials, cityGroups] = await Promise.all([
+  const signalController = new AbortController();
+  req.once("aborted", () => signalController.abort());
+  res.locals.dbOperation = "portfolio.bundle";
+  const [caseStudies, team, testimonials, cityGroups] = await withReadRetry(() =>
+    Promise.all([
     db.portfolioCaseStudy.findMany({
       where: publishedCaseWhere,
       orderBy: [
@@ -321,7 +327,14 @@ portfolioPublic.get("/portfolio", async (_req, res) => {
         _count: { select: { properties: { where: portfolioWhere } } },
       },
     }),
-  ]);
+    ]),
+  {
+    operation: "portfolio.bundle",
+    requestId: res.locals.requestId,
+    signal: signalController.signal,
+    deadlineMs: env.DB_READ_RETRY_DEADLINE_MS,
+    maxAttempts: env.DB_READ_RETRY_MAX_ATTEMPTS,
+  });
   const cities = cityGroups.map((l) => ({
     name: l.name,
     slug: l.slug,

@@ -20,6 +20,15 @@ const schema = z.object({
   CLOUDINARY_API_KEY: z.string().default(""),
   CLOUDINARY_API_SECRET: z.string().default(""),
   LOG_LEVEL: z.string().default("info"),
+  DB_SLOW_QUERY_MS: z.coerce.number().int().positive().max(60000).default(500),
+  DB_READ_RETRY_DEADLINE_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(30000)
+    .default(12000),
+  DB_READ_RETRY_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(2).default(2),
+  SESSION_POOL_MAX: z.coerce.number().int().positive().max(20).default(4),
 });
 export const env = schema.parse(process.env);
 if (env.NODE_ENV === "production" && !env.APP_ORIGIN.startsWith("https://"))

@@ -1,21 +1,17 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { api, emptySettings } from "@/lib/api";
 import type {
   Property,
   Location,
   Settings,
-  PortfolioBundle,
 } from "@modern-airbnd/contracts";
 import { Search } from "@/components/Search";
 import { Photo } from "@/components/Photo";
 import { Icon } from "@/components/Icon";
 import { Operator } from "@/components/Trust";
+import { HomePortfolioSection } from "@/components/HomePortfolioSection";
 import { RetryButton } from "@/components/RetryButton";
-import {
-  CaseStudyCard,
-  TeamCard,
-  TestimonialCard,
-} from "@/components/PortfolioCards";
 import { CityIcon } from "@/components/CityIcon";
 
 function propertyHref(property: Property) {
@@ -33,13 +29,11 @@ function stayMeta(property: Property) {
 }
 
 export default async function Home() {
-  const [propertyResult, locationResult, settingsResult, portfolioResult] =
-    await Promise.allSettled([
-      api<Property[]>("/properties"),
-      api<Location[]>("/locations"),
-      api<Settings>("/settings/public"),
-      api<PortfolioBundle>("/portfolio"),
-    ]);
+  const [propertyResult, locationResult, settingsResult] = await Promise.allSettled([
+    api<Property[]>("/properties"),
+    api<Location[]>("/locations"),
+    api<Settings>("/settings/public"),
+  ]);
   const properties =
     propertyResult.status === "fulfilled" ? propertyResult.value : [];
   const apiLocations =
@@ -66,13 +60,6 @@ export default async function Home() {
   const featured = showcase.length ? showcase : fallbackShowcase;
   // QA-013: portfolio-led home. Every figure below comes from the real
   // portfolio API — nothing here is invented.
-  const portfolio =
-    portfolioResult.status === "fulfilled" ? portfolioResult.value : null;
-  const ownerCities = portfolio?.cities.slice(0, 6) ?? [];
-  const ownerTeam = portfolio?.team.slice(0, 3) ?? [];
-  const ownerTestimonials = portfolio?.testimonials.slice(0, 2) ?? [];
-  const ownerCases = portfolio?.caseStudies.slice(0, 3) ?? [];
-
   return (
     <div className="landing-page">
       <section className={`landing-hero ${hero ? "has-photo" : ""}`}>
@@ -114,7 +101,21 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="landing-section owner-portfolio-band" aria-labelledby="owner-band-title">
+      <Suspense
+        fallback={
+          <section className="landing-section owner-portfolio-band" aria-busy="true">
+            <div className="container">
+              <div className="skeleton title-skeleton" />
+              <div className="skeleton card-skeleton" />
+            </div>
+          </section>
+        }
+      >
+        <HomePortfolioSection />
+      </Suspense>
+      {/* Legacy inline portfolio section retained temporarily while the async
+          boundary is extracted. */}
+      {/* <section className="landing-section owner-portfolio-band" aria-labelledby="owner-band-title">
         <div className="container">
           <div className="landing-section-head">
             <div>
@@ -223,7 +224,7 @@ export default async function Home() {
               </div>
             )}
         </div>
-      </section>
+      </section> */}
 
       <section className="landing-section destination-section" aria-labelledby="destination-title">
         <div className="container">

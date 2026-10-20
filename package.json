@@ -19,6 +19,8 @@
     "db:generate": "npm run db:generate -w @modern-airbnd/api",
     "db:migrate": "node infra/scripts/run.mjs db:migrate",
     "db:seed": "node infra/scripts/run.mjs db:seed",
+    "db:local:up": "docker compose up -d postgres",
+    "db:local:test:up": "docker compose --profile test up -d postgres-test",
     "admin:hash": "tsx infra/scripts/hash-password.ts",
     "dev:api": "node infra/scripts/run.mjs api:dev",
     "dev:web": "node infra/scripts/run.mjs web:dev",

@@ -21,11 +21,23 @@ export type FullProperty = Prisma.PropertyGetPayload<{
   include: typeof include;
 }>;
 export async function settings() {
-  return db.siteSettings.upsert({
-    where: { id: 1 },
-    create: { id: 1 },
-    update: {},
-  });
+  // Public reads must remain idempotent so the API can safely retry a
+  // temporary connection failure. Admin settings writes still use an upsert.
+  return (
+    (await db.siteSettings.findUnique({ where: { id: 1 } })) ?? {
+      id: 1,
+      defaultWhatsappNumber: "",
+      supportPhone: "",
+      supportEmail: "",
+      businessAddress: "",
+      operatorName: "",
+      aboutText: "",
+      privacyText: "",
+      termsText: "",
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    }
+  );
 }
 export function publishErrors(p: FullProperty, fallback: string) {
   const errors: string[] = [];
