@@ -1,6 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
 import { NavigationLink } from "./NavigationLink";
@@ -13,11 +13,35 @@ import {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
   const mode = navMode(pathname);
   const links = NAV_LINKS[mode];
   const ctas = headerCtas(mode);
   const publicHeader = mode !== "admin";
+
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
+
+  const closeMenu = () => {
+    if (!open || closing) return;
+    setClosing(true);
+    closeTimer.current = setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+      closeTimer.current = null;
+    }, 180);
+  };
+
+  const toggleMenu = () => {
+    if (open) closeMenu();
+    else {
+      setClosing(false);
+      setOpen(true);
+    }
+  };
 
   return (
     <header
@@ -66,15 +90,19 @@ export function Header() {
         )}
         <button
           className="icon-btn mobile-menu"
-          aria-label="Open menu"
-          onClick={() => setOpen(true)}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-controls="mobile-site-menu"
+          aria-expanded={open}
+          onClick={toggleMenu}
         >
-          <Icon name="menu" />
+          <Icon name={open ? "close" : "menu"} />
         </button>
       </div>
       <Dialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={closeMenu}
+        className={`header-menu-dialog ${closing ? "is-closing" : ""}`}
+        id="mobile-site-menu"
         title={
           mode === "admin"
             ? "Admin workspaces"

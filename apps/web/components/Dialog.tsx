@@ -5,11 +5,15 @@ export function Dialog({
   onClose,
   title,
   children,
+  className,
+  id,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  className?: string;
+  id?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -25,7 +29,12 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      onCancel={onClose}
+      className={className}
+      id={id}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
