@@ -4891,4 +4891,8 @@ header[data-nav-mode="owner"] .brand strong {
     animation: none;
     will-change: auto;
   }
+  .public-bottom-nav a:has(.navigation-link-pending) > span:not(.navigation-link-pending) {
+    color: currentColor;
+    background: none;
+  }
 }
