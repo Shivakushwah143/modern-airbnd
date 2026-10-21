@@ -13,6 +13,7 @@ import { Icon } from "@/components/Icon";
 import { RetryButton } from "@/components/RetryButton";
 import { resolvePortfolioContent } from "@/lib/demo-portfolio";
 import { PortfolioCityExplorer } from "@/components/PortfolioCityExplorer";
+import { ScrollableCardRail } from "@/components/ScrollableCardDots";
 
 export const metadata: Metadata = {
   title: "Our portfolio, services & team",
@@ -216,7 +217,12 @@ export default async function PortfolioPage({
             body="Published owner stories and management outcomes, kept separate from the guest booking journey."
           />
           {bundle?.caseStudies.length ? (
-            <div className="case-grid">
+            <ScrollableCardRail
+              className="case-grid"
+              count={bundle.caseStudies.length}
+              label="case study"
+              autoAdvanceOnMobile
+            >
               {bundle.caseStudies.map((item) => (
                 <article className="portfolio-case-card" key={item.id}>
                   {item.coverUrl ? (
@@ -246,7 +252,7 @@ export default async function PortfolioPage({
                   </div>
                 </article>
               ))}
-            </div>
+            </ScrollableCardRail>
           ) : (
             <EmptyState
               icon="photo"

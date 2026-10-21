@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { Icon } from "./Icon";
-import { ScrollableCardDots } from "./ScrollableCardDots";
+import { ScrollableCardDots, useMobileAutoAdvance } from "./ScrollableCardDots";
 
 const SERVICES = [
   [
@@ -57,6 +57,9 @@ const STEPS = [
 
 export function PortfolioServices() {
   const servicesRailRef = useRef<HTMLDivElement>(null);
+  const onboardingRailRef = useRef<HTMLOListElement>(null);
+  useMobileAutoAdvance(servicesRailRef, SERVICES.length);
+  useMobileAutoAdvance(onboardingRailRef, STEPS.length);
   return (
     <>
       <section
@@ -100,7 +103,7 @@ export function PortfolioServices() {
             From first conversation to daily care.
           </h2>
         </div>
-        <ol className="portfolio-onboarding">
+        <ol className="portfolio-onboarding" ref={onboardingRailRef}>
           {STEPS.map(([title, body], index) => (
             <li key={title}>
               <span className="step-number">0{index + 1}</span>
@@ -109,6 +112,11 @@ export function PortfolioServices() {
             </li>
           ))}
         </ol>
+        <ScrollableCardDots
+          railRef={onboardingRailRef}
+          count={STEPS.length}
+          label="onboarding step"
+        />
       </section>
     </>
   );
