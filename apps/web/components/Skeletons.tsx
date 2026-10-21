@@ -172,15 +172,51 @@ export function PropertyDetailSkeleton() {
 
 export function PortfolioSkeleton() {
   return (
-    <section
-      className="container section"
+    <div
+      className="portfolio-page portfolio-redesign portfolio-page-skeleton"
       aria-busy="true"
       aria-label="Loading owner portfolio"
     >
-      <Skeleton className="skeleton-line skeleton-line-short" />
-      <Skeleton className="skeleton-line skeleton-line-title" />
-      <ListingGridSkeleton count={3} />
-    </section>
+      <section className="portfolio-founder">
+        <div className="container portfolio-skeleton-founder-layout">
+          <div className="portfolio-skeleton-founder-copy">
+            <Skeleton className="portfolio-skeleton-eyebrow" />
+            <Skeleton className="portfolio-skeleton-hero-title" />
+            <Skeleton className="portfolio-skeleton-hero-title short" />
+            <Skeleton className="portfolio-skeleton-hero-copy" />
+            <div className="portfolio-skeleton-actions">
+              <Skeleton />
+              <Skeleton />
+            </div>
+          </div>
+          <Skeleton className="portfolio-skeleton-founder-image" />
+        </div>
+      </section>
+      <div className="container">
+        <section className="portfolio-skeleton-section">
+          <Skeleton className="portfolio-skeleton-eyebrow" />
+          <Skeleton className="portfolio-skeleton-section-title" />
+          <div className="portfolio-skeleton-team-grid">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div className="portfolio-skeleton-person" key={index}>
+                <Skeleton className="portfolio-skeleton-person-image" />
+                <Skeleton className="portfolio-skeleton-person-name" />
+                <Skeleton className="portfolio-skeleton-person-copy" />
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="portfolio-skeleton-section">
+          <Skeleton className="portfolio-skeleton-eyebrow" />
+          <Skeleton className="portfolio-skeleton-section-title compact" />
+          <div className="portfolio-skeleton-city-grid">
+            {Array.from({ length: 3 }, (_, index) => (
+              <Skeleton className="portfolio-skeleton-city-card" key={index} />
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
 

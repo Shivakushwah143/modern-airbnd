@@ -6,5 +6,7 @@ export default async function PortfolioSectionRedirect({
   params: Promise<{ city: string }>;
 }) {
   const { city } = await params;
-  permanentRedirect(`/portfolio#city-${encodeURIComponent(city)}`);
+  permanentRedirect(
+    `/portfolio?city=${encodeURIComponent(city)}#selected-city-properties`,
+  );
 }
