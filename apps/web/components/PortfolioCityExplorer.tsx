@@ -13,6 +13,7 @@ import { Gallery } from "./Gallery";
 import { Icon } from "./Icon";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { Photo } from "./Photo";
+import { ScrollableCardDots } from "./ScrollableCardDots";
 
 type CitySource = Record<string, PortfolioCityBundle>;
 
@@ -38,6 +39,7 @@ export function PortfolioCityExplorer({
   const [loading, setLoading] = useState(Boolean(validInitial));
   const requestRef = useRef<AbortController | null>(null);
   const propertiesRef = useRef<HTMLElement>(null);
+  const propertyRailRef = useRef<HTMLDivElement>(null);
   const selectedCity = cities.find((city) => city.slug === selectedSlug);
 
   useEffect(() => {
@@ -196,16 +198,23 @@ export function PortfolioCityExplorer({
             </div>
           ) : null}
           {result && result.properties.length > 0 ? (
-            <div className="portfolio-property-grid">
-              {result.properties.map((property) => (
-                <PortfolioPropertyCard
-                  key={property.id}
-                  property={property}
-                  cityName={selectedCity.name}
-                  demo={demo || property.isDemo}
-                />
-              ))}
-            </div>
+            <>
+              <div className="portfolio-property-grid" ref={propertyRailRef}>
+                {result.properties.map((property) => (
+                  <PortfolioPropertyCard
+                    key={property.id}
+                    property={property}
+                    cityName={selectedCity.name}
+                    demo={demo || property.isDemo}
+                  />
+                ))}
+              </div>
+              <ScrollableCardDots
+                railRef={propertyRailRef}
+                count={result.properties.length}
+                label={`${selectedCity.name} property`}
+              />
+            </>
           ) : null}
         </section>
       ) : null}

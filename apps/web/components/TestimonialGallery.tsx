@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { Testimonial } from "@modern-airbnd/contracts";
+import { ScrollableCardDots } from "./ScrollableCardDots";
 
 type Filter = "ALL" | "IMAGE" | "VIDEO";
 
@@ -24,6 +25,7 @@ export function TestimonialGallery({
   const closeRef = useRef<HTMLButtonElement>(null);
   const lightboxRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const railRef = useRef<HTMLDivElement>(null);
 
   const visible = items.filter(
     (item) => filter === "ALL" || item.mediaType === filter,
@@ -113,7 +115,7 @@ export function TestimonialGallery({
         ))}
       </div>
 
-      <div className="testimonial-grid">
+      <div className="testimonial-grid" ref={railRef}>
         {visible.length === 0 && (
           <p className="testimonial-filter-empty" role="status">
             No {filter === "VIDEO" ? "videos" : "screenshots"} are published
@@ -201,6 +203,11 @@ export function TestimonialGallery({
           );
         })}
       </div>
+      <ScrollableCardDots
+        railRef={railRef}
+        count={visible.length}
+        label="owner testimonial"
+      />
 
       {opened && (
         <div

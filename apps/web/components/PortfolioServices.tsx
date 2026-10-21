@@ -1,4 +1,8 @@
+"use client";
+
+import { useRef } from "react";
 import { Icon } from "./Icon";
+import { ScrollableCardDots } from "./ScrollableCardDots";
 
 const SERVICES = [
   [
@@ -52,6 +56,7 @@ const STEPS = [
 ];
 
 export function PortfolioServices() {
+  const servicesRailRef = useRef<HTMLDivElement>(null);
   return (
     <>
       <section
@@ -67,7 +72,7 @@ export function PortfolioServices() {
             pricing are discussed with the team.
           </p>
         </div>
-        <div className="services-grid">
+        <div className="services-grid" ref={servicesRailRef}>
           {SERVICES.map(([icon, title, body]) => (
             <article className="service-card" key={title}>
               <span className="service-icon">
@@ -78,6 +83,11 @@ export function PortfolioServices() {
             </article>
           ))}
         </div>
+        <ScrollableCardDots
+          railRef={servicesRailRef}
+          count={SERVICES.length}
+          label="management service"
+        />
       </section>
       <section
         id="onboarding"
