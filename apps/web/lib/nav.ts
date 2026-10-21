@@ -2,10 +2,10 @@
  * Route-aware navigation (FR-006..FR-014, W32 navigation switches).
  *
  * `navMode(pathname)` decides which navigation shell applies:
- *  - "admin"  â†’ admin workspaces (/admin/**)
- *  - "owner"  â†’ portfolio / service-owner surfacing (/portfolio, /services)
- *  - "guest"  â†’ guest booking experiences (/stays/**, /enquiry/**)
- *  - "neutral"â†’ public browsing (home, /locations, informational pages)
+ *  - "admin"  → admin workspaces (/admin/**)
+ *  - "owner"  → portfolio / service-owner surfacing (/portfolio, /services)
+ *  - "guest"  → guest booking experiences (/stays/**, /enquiry/**)
+ *  - "neutral"→ public browsing (home, /locations, informational pages)
  *
  * The admin mode wins over everything: no guest/owner content leaks into the
  * admin shell, as required by the execution plan (guest content must not run
@@ -54,7 +54,8 @@ export const NAV_LINKS: Record<NavMode, NavLink[]> = {
     { href: "/about", label: "About", icon: "shield" },
     { href: "/contact", label: "Contact", icon: "chat" },
   ],
-  owner: [ { href: "/services", label: "Our Services", icon: "home" },
+  owner: [
+    { href: "/services", label: "Our Services", icon: "shield" },
     { href: "/portfolio", label: "Our Portfolio", icon: "home" },
     { href: "/portfolio#properties", label: "Properties", icon: "bed" },
     { href: "/portfolio#services", label: "Services", icon: "shield" },
@@ -84,6 +85,7 @@ export const BOTTOM_LINKS: Record<NavMode, NavLink[]> = {
     { href: "/contact", label: "Contact", icon: "chat" },
   ],
   owner: [
+    { href: "/services", label: "Our Services", icon: "shield" },
     { href: "/", label: "Home", icon: "home" },
     { href: "/portfolio", label: "Portfolio", icon: "photo" },
     { href: "/portfolio#services", label: "Services", icon: "shield" },
